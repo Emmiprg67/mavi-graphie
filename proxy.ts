@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/adminAuth";
 
-// Admin area is disabled for this deployment (no admin env vars configured).
-// Restore the auth check below once ADMIN_USERNAME/ADMIN_PASSWORD_HASH/ADMIN_SESSION_SECRET are set.
-const ADMIN_AREA_ENABLED = false;
+function isAdminAreaEnabled() {
+  return Boolean(
+    process.env.ADMIN_USERNAME &&
+      process.env.ADMIN_PASSWORD_HASH &&
+      process.env.ADMIN_SESSION_SECRET,
+  );
+}
 
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  if (!ADMIN_AREA_ENABLED) {
+  if (!isAdminAreaEnabled()) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
