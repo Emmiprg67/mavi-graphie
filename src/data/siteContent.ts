@@ -24,22 +24,22 @@ export const heroCopy = {
 
 export const services = [
   {
-    title: "Familienfotografie",
+    title: "Verlobung",
     description:
-      "Lebendige Erinnerungen an Nähe, Alltag und die kleinen Momente dazwischen.",
-    category: "Familie",
+      "Berührende Momente eures Verlobungsversprechens, natürlich und voller Vorfreude festgehalten.",
+    category: "Verlobung",
   },
   {
-    title: "Schwangerschaft",
+    title: "Henna",
     description:
-      "Ruhige, liebevolle Bilder einer besonderen Zeit voller Vorfreude.",
-    category: "Schwangerschaft",
+      "Farbenfrohe Reportage eurer Hennanacht voller Tradition, Freude und besonderer Emotionen.",
+    category: "Henna",
   },
   {
-    title: "Neugeborene",
+    title: "Standesamt",
     description:
-      "Zarte Aufnahmen mit viel Geduld, Wärme und einem Blick für Details.",
-    category: "Neugeborene",
+      "Zeitlose Aufnahmen eurer standesamtlichen Trauung, persönlich und mit Blick für den Moment.",
+    category: "Standesamt",
   },
   {
     title: "Paare",
@@ -134,9 +134,9 @@ export const contactCopy = {
 };
 
 export const shootingTypes = [
-  "Familie",
-  "Schwangerschaft",
-  "Neugeborene",
+  "Verlobung",
+  "Henna",
+  "Standesamt",
   "Paar",
   "Hochzeit",
   "Portrait",

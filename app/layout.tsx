@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { brand } from "@/data/siteContent";
-import { PageTransition } from "@/components/PageTransition";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,7 +8,7 @@ export const metadata: Metadata = {
     template: `%s | ${brand.name}`,
   },
   description:
-    `Helle, natürliche und zeitlose Fotografie für Familien, Paare, Hochzeiten, Schwangerschaft, Neugeborene und Portraits von ${brand.name}.`,
+    `Helle, natürliche und zeitlose Fotografie für Paare, Hochzeiten, Verlobung, Henna, Standesamt und Portraits von ${brand.name}.`,
   openGraph: {
     title: brand.name,
     description:
@@ -33,10 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body>
-        <PageTransition />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

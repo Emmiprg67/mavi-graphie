@@ -18,8 +18,9 @@ const categoryValues: MediaCategory[] = [
   "Paare",
   "Baby",
   "Portrait",
-  "Schwangerschaft",
-  "Neugeborene",
+  "Verlobung",
+  "Henna",
+  "Standesamt",
   "Sonstiges",
 ];
 

@@ -6,8 +6,9 @@ export type MediaCategory =
   | "Paare"
   | "Baby"
   | "Portrait"
-  | "Schwangerschaft"
-  | "Neugeborene"
+  | "Verlobung"
+  | "Henna"
+  | "Standesamt"
   | "Sonstiges";
 
 export type MediaImage = {
