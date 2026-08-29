@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
 
 export const runtime = "nodejs";
 
@@ -11,8 +12,29 @@ const requiredFields = [
   "message",
 ] as const;
 
+const CONTACT_RECIPIENT = "mavi.graphie@gmx.de";
+
+const fieldLabels: Record<string, string> = {
+  firstName: "Vorname",
+  lastName: "Nachname",
+  email: "E-Mail",
+  phone: "Telefon",
+  shootingType: "Art des Shootings",
+  preferredDate: "Wunschtermin",
+  location: "Ort / Location",
+  budget: "Budget",
+  people: "Anzahl der Personen",
+  message: "Nachricht",
+};
+
 function isValidEmail(email: string) {
   return /^\S+@\S+\.\S+$/.test(email);
+}
+
+function buildEmailText(body: Record<string, string | boolean | undefined>) {
+  return Object.entries(fieldLabels)
+    .map(([key, label]) => `${label}: ${String(body[key] ?? "").trim() || "-"}`)
+    .join("\n");
 }
 
 export async function POST(request: NextRequest) {
@@ -57,34 +79,34 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const webhookUrl = process.env.CONTACT_WEBHOOK_URL;
+  const senderDomain = process.env.RESEND_EMAIL_DOMAIN;
+  const apiKey = process.env.RESEND_API_KEY;
 
-  if (!webhookUrl) {
+  if (!apiKey || !senderDomain) {
     return NextResponse.json(
       {
         message:
-          "Das Formular ist geprüft, aber noch nicht mit einem Versanddienst verbunden. Setze CONTACT_WEBHOOK_URL, um Anfragen zu versenden.",
+          "Das Formular ist geprüft, aber noch nicht mit einem Versanddienst verbunden. Setze RESEND_API_KEY und RESEND_EMAIL_DOMAIN, um Anfragen zu versenden.",
         status: "not_configured",
       },
       { status: 503 },
     );
   }
 
-  const response = await fetch(webhookUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(process.env.CONTACT_WEBHOOK_SECRET
-        ? { Authorization: `Bearer ${process.env.CONTACT_WEBHOOK_SECRET}` }
-        : {}),
-    },
-    body: JSON.stringify({
-      ...body,
-      receivedAt: new Date().toISOString(),
-    }),
+  const resend = new Resend(apiKey);
+  const firstName = String(body.firstName);
+  const lastName = String(body.lastName);
+  const senderEmail = String(body.email);
+
+  const { error } = await resend.emails.send({
+    from: `Mavi Graphie Website <kontakt@${senderDomain}>`,
+    to: [CONTACT_RECIPIENT],
+    replyTo: senderEmail,
+    subject: `Neue Anfrage von ${firstName} ${lastName}`,
+    text: buildEmailText(body),
   });
 
-  if (!response.ok) {
+  if (error) {
     return NextResponse.json(
       {
         message:

@@ -8,7 +8,7 @@ export const legalPlaceholders = {
   register: "[REGISTERANGABEN EINTRAGEN - FALLS VORHANDEN]",
   supervisoryAuthority: "[ZUSTÄNDIGE AUFSICHTSBEHÖRDE PRÜFEN]",
   hostingProvider: "[HOSTING-ANBIETER PRÜFEN UND EINTRAGEN]",
-  storageProvider: "Lokaler Uploadspeicher im Projektordner public/uploads",
+  storageProvider: "Vercel Blob (Vercel Inc., USA) – Speicherung der hochgeladenen Bilddateien",
   retention: "[SPEICHERDAUER PRÜFEN]",
 };
 
@@ -17,7 +17,7 @@ export const legalConfig = {
     hosting: legalPlaceholders.hostingProvider,
     uploads: legalPlaceholders.storageProvider,
     contactApi:
-      "Kontaktformular über /api/contact; optionaler Versand an CONTACT_WEBHOOK_URL, falls konfiguriert.",
+      "Kontaktformular über /api/contact; Versand per E-Mail über Resend (Resend Inc., USA) an das Postfach des Betreibers.",
     admin:
       "Admin-Uploadbereich mit optionalem ADMIN_UPLOAD_TOKEN. Der Token wird nicht öffentlich angezeigt.",
     instagram:

@@ -24,10 +24,10 @@ There is no lint script, no test runner, and no test files configured in this re
 ### Content is data-driven, not hardcoded
 Page copy lives in `src/data/siteContent.ts` (brand info, nav, hero, services, etc.) and `src/data/legalContent.ts` / `src/data/contact.ts`. Section components (`src/components/*Section.tsx`) pull their text from these files rather than inlining strings — when changing copy, edit the data file, not the component.
 
-### Image management is a flat-file "CMS", not a database
-- Manifest: `public/uploads/media.json` — a JSON array of `MediaImage` (see `src/types/media.ts`).
-- Files themselves live alongside the manifest in `public/uploads/`.
-- All CRUD goes through `app/api/images/route.ts` (`GET`/`POST`/`PATCH`/`DELETE`), which reads/writes the manifest and filesystem directly with Node's `fs/promises` (`runtime = "nodejs"`, required since Edge can't touch the filesystem).
+### Image management is a flat-file "CMS" backed by Vercel Blob, not a database
+- Storage: Vercel Blob (`@vercel/blob`), public access. Uploaded image files live under the `uploads/` prefix; the manifest is a single JSON blob at `media.json` (a JSON array of `MediaImage`, see `src/types/media.ts`), written with `addRandomSuffix: false, allowOverwrite: true` so it always resolves to the same blob.
+- All CRUD goes through `app/api/images/route.ts` (`GET`/`POST`/`PATCH`/`DELETE`), which reads/writes the manifest and files via `put`/`del`/`list` from `@vercel/blob` (`runtime = "nodejs"`). Requires `BLOB_READ_WRITE_TOKEN` (provisioned automatically by the linked Blob store).
+- `MediaImage.src` is a full `https://*.public.blob.vercel-storage.com/...` URL, not a local path — `next.config.ts` allows that hostname via `images.remotePatterns` so `next/image` can optimize it.
 - `GET` supports query params: `home` (home-page images), `photographer` (about/photographer images), `category`, `limit`, and `includeInactive` (requires auth).
 - Client-side reads go through `src/hooks/useUploadedImages.ts`, which has a module-level `Map` cache + in-flight request dedup keyed by query string — components sharing the same query reuse one fetch.
 - Mutations (`POST`/`PATCH`/`DELETE`) are gated by `canMutate()`: either a valid admin session cookie, or a request header `x-admin-token` matching `ADMIN_UPLOAD_TOKEN` (for scripted/non-browser access).
@@ -39,7 +39,7 @@ Page copy lives in `src/data/siteContent.ts` (brand info, nav, hero, services, e
 This is Next.js 16's renamed middleware convention — `proxy.ts` at the project root exports a `proxy()` function with a `config.matcher`, functionally equivalent to the old `middleware.ts`. It matches `/admin/:path*` and redirects unauthenticated requests to `/admin/login` (and authenticated requests away from the login page).
 
 ### Contact form
-`app/api/contact/route.ts` validates required fields + privacy checkbox, then optionally forwards the payload as JSON to `CONTACT_WEBHOOK_URL` (with a bearer `CONTACT_WEBHOOK_SECRET` if set). If the webhook env var isn't configured, it returns a 503 explaining the form isn't wired up yet — this is expected in local/dev environments without a webhook configured.
+`app/api/contact/route.ts` validates required fields + privacy checkbox, then sends the submission as an email via the Resend Marketplace integration (`resend` npm package) to `mavi.graphie@gmx.de`, using `RESEND_API_KEY` and `RESEND_EMAIL_DOMAIN` (the verified sending domain, e.g. `mavi-graphie.com`; the "from" address is `kontakt@<RESEND_EMAIL_DOMAIN>`). The visitor's email is set as `replyTo`. If either env var isn't configured, it returns a 503 explaining the form isn't wired up yet — this is expected in local/dev environments without Resend configured.
 
 ### Styling & animation
 - Tailwind config (`tailwind.config.ts`) defines the brand palette as named colors (`ivory`, `linen`, `mist`, `greige`, `clay`, `umber`, `graphite`, `gold`, `sage`, etc.) plus matching CSS custom properties in `app/globals.css` — prefer the Tailwind color names over raw hex values.

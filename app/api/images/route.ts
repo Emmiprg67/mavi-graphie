@@ -1,14 +1,13 @@
 import { randomUUID } from "crypto";
-import { promises as fs } from "fs";
 import path from "path";
+import { del, list, put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequest, timingSafeEqual } from "@/lib/adminAuth";
 import type { MediaCategory, MediaImage } from "@/types/media";
 
 export const runtime = "nodejs";
 
-const uploadDirectory = path.join(process.cwd(), "public", "uploads");
-const manifestPath = path.join(uploadDirectory, "media.json");
+const manifestPathname = "media.json";
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 const categoryValues: MediaCategory[] = [
   "Slider",
@@ -24,29 +23,26 @@ const categoryValues: MediaCategory[] = [
   "Sonstiges",
 ];
 
-async function ensureStorage() {
-  await fs.mkdir(uploadDirectory, { recursive: true });
-  try {
-    await fs.access(manifestPath);
-  } catch {
-    await fs.writeFile(manifestPath, "[]", "utf8");
-  }
-}
-
 async function readImages(): Promise<MediaImage[]> {
-  await ensureStorage();
-  const content = await fs.readFile(manifestPath, "utf8");
-  try {
-    const parsed = JSON.parse(content) as MediaImage[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  const { blobs } = await list({ prefix: manifestPathname, limit: 1 });
+  const manifest = blobs.find((blob) => blob.pathname === manifestPathname);
+  if (!manifest) return [];
+
+  const response = await fetch(manifest.url, { cache: "no-store" });
+  if (!response.ok) return [];
+
+  const parsed = await response.json().catch(() => null);
+  return Array.isArray(parsed) ? (parsed as MediaImage[]) : [];
 }
 
 async function writeImages(images: MediaImage[]) {
-  await ensureStorage();
-  await fs.writeFile(manifestPath, JSON.stringify(images, null, 2), "utf8");
+  await put(manifestPathname, JSON.stringify(images, null, 2), {
+    access: "public",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: "application/json",
+    cacheControlMaxAge: 0,
+  });
 }
 
 async function canMutate(request: NextRequest) {
@@ -127,6 +123,10 @@ function createFilename(file: File) {
     ? extension
     : ".jpg";
   return `${Date.now()}-${randomUUID()}${safeExtension}`;
+}
+
+async function deleteBlob(url: string) {
+  await del(url).catch(() => undefined);
 }
 
 export async function GET(request: NextRequest) {
@@ -221,12 +221,15 @@ export async function POST(request: NextRequest) {
 
   for (const { file, buffer } of buffers) {
     const filename = createFilename(file);
-    const destination = path.join(uploadDirectory, filename);
-    await fs.writeFile(destination, buffer);
+    const blob = await put(`uploads/${filename}`, buffer, {
+      access: "public",
+      addRandomSuffix: false,
+      contentType: file.type,
+    });
 
     uploadedImages.push({
       id: randomUUID(),
-      src: `/uploads/${filename}`,
+      src: blob.url,
       title: title || altPrefix || `Fotografie ${uploadedImages.length + 1}`,
       alt: altPrefix || `Fotografie aus der Kategorie ${category}`,
       category,
@@ -322,13 +325,15 @@ export async function PATCH(request: NextRequest) {
     }
 
     const filename = createFilename(replacement);
-    const destination = path.join(uploadDirectory, filename);
-    await fs.writeFile(destination, buffer);
-    replacementSrc = `/uploads/${filename}`;
+    const blob = await put(`uploads/${filename}`, buffer, {
+      access: "public",
+      addRandomSuffix: false,
+      contentType: replacement.type,
+    });
+    replacementSrc = blob.url;
 
-    if (currentImage.src?.startsWith("/uploads/")) {
-      const previousFilePath = path.join(process.cwd(), "public", currentImage.src);
-      await fs.unlink(previousFilePath).catch(() => undefined);
+    if (currentImage.src) {
+      await deleteBlob(currentImage.src);
     }
   }
 
@@ -375,9 +380,8 @@ export async function DELETE(request: NextRequest) {
   const image = images.find((item) => item.id === body.id);
   const remainingImages = images.filter((item) => item.id !== body.id);
 
-  if (image?.src?.startsWith("/uploads/")) {
-    const filePath = path.join(process.cwd(), "public", image.src);
-    await fs.unlink(filePath).catch(() => undefined);
+  if (image?.src) {
+    await deleteBlob(image.src);
   }
 
   await writeImages(remainingImages);
