@@ -8,7 +8,8 @@ export const legalPlaceholders = {
   register: "[REGISTERANGABEN EINTRAGEN - FALLS VORHANDEN]",
   supervisoryAuthority: "[ZUSTÄNDIGE AUFSICHTSBEHÖRDE PRÜFEN]",
   hostingProvider: "[HOSTING-ANBIETER PRÜFEN UND EINTRAGEN]",
-  storageProvider: "Vercel Blob (Vercel Inc., USA) – Speicherung der hochgeladenen Bilddateien",
+  storageProvider:
+    "Cloudinary (Cloudinary Ltd., USA) für hochgeladene Bilddateien; Vercel Blob (Vercel Inc., USA) für den internen Bildindex (Metadaten)",
   retention: "[SPEICHERDAUER PRÜFEN]",
 };
 

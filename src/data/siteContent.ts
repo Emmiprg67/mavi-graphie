@@ -1,7 +1,7 @@
 export const brand = {
   siteName: "Mavi Graphie",
   name: "Mavi Graphie",
-  email: "hello@mavi-graphie.de",
+  email: "mavi-graphie@gmx.de",
   instagram: "https://www.instagram.com/mavi.graphie?igsh=cDE4bWI5dDI0eGNx",
 };
 
@@ -106,24 +106,9 @@ export const processSteps = [
 ];
 
 export const testimonials = [
-  {
-    quote:
-      "Beispielstimme: Wir haben uns sofort wohlgefühlt und die Bilder wirken genauso natürlich, wie wir es uns gewünscht haben.",
-    name: "Beispielkunde A",
-    type: "Familienshooting",
-  },
-  {
-    quote:
-      "Beispielstimme: Die Begleitung war ruhig, aufmerksam und voller Gespür für die kleinen Augenblicke.",
-    name: "Beispielkunde B",
-    type: "Hochzeitsreportage",
-  },
-  {
-    quote:
-      "Beispielstimme: Aus einem nervösen Start wurde ein entspannter Nachmittag mit Bildern, die uns sehr berühren.",
-    name: "Beispielkunde C",
-    type: "Paarshooting",
-  },
+  { type: "Familienshooting" },
+  { type: "Hochzeitsreportage" },
+  { type: "Paarshooting" },
 ];
 
 export const contactCopy = {

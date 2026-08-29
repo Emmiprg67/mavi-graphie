@@ -35,18 +35,15 @@ export function TestimonialsSection() {
         <AnimatedHeading
           id="testimonials-title"
           eyebrow="Kundenstimmen"
-          title="Worte, die später durch echte Rückmeldungen ersetzt werden."
+          title="Anlässe, die ich begleite"
           className="serif-heading text-[2.15rem] text-graphite md:text-[3.15rem]"
         />
 
-        <figure className="mt-10 bg-white px-6 py-10 md:px-12">
-          <blockquote className="font-serif text-2xl leading-10 text-graphite md:text-3xl">
-            “{active.quote}”
-          </blockquote>
-          <figcaption className="mt-8 text-sm font-bold uppercase tracking-normal text-clay">
-            {active.name} · {active.type}
-          </figcaption>
-        </figure>
+        <div className="mt-10 flex items-center justify-center bg-white px-6 py-10 md:px-12">
+          <span className="text-sm font-bold uppercase tracking-normal text-clay">
+            {active.type}
+          </span>
+        </div>
 
         <div className="mt-7 flex items-center justify-center gap-3">
           <button
@@ -63,7 +60,7 @@ export function TestimonialsSection() {
           </button>
           {testimonials.map((testimonial, itemIndex) => (
             <button
-              key={testimonial.name}
+              key={testimonial.type}
               type="button"
               className={`h-2.5 w-2.5 rounded-full transition ${
                 itemIndex === index ? "bg-clay" : "bg-greige"

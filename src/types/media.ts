@@ -14,6 +14,7 @@ export type MediaCategory =
 export type MediaImage = {
   id: string;
   src: string;
+  publicId?: string;
   title?: string;
   alt: string;
   category: MediaCategory;

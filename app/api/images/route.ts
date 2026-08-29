@@ -1,12 +1,20 @@
 import { randomUUID } from "crypto";
-import path from "path";
-import { del, list, put } from "@vercel/blob";
+import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
+import { list, put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequest, timingSafeEqual } from "@/lib/adminAuth";
 import type { MediaCategory, MediaImage } from "@/types/media";
 
 export const runtime = "nodejs";
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
+
+const cloudinaryFolder = "mavi-graphie/uploads";
 const manifestPathname = "media.json";
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 const categoryValues: MediaCategory[] = [
@@ -115,18 +123,49 @@ function isActive(image: MediaImage) {
   return image.active !== false;
 }
 
-function createFilename(file: File) {
-  const extension = path.extname(file.name).toLowerCase() || ".jpg";
-  const safeExtension = [".jpg", ".jpeg", ".png", ".webp", ".avif"].includes(
-    extension,
-  )
-    ? extension
-    : ".jpg";
-  return `${Date.now()}-${randomUUID()}${safeExtension}`;
+function isCloudinaryConfigured() {
+  return Boolean(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET,
+  );
 }
 
-async function deleteBlob(url: string) {
-  await del(url).catch(() => undefined);
+function uploadImageBuffer(buffer: Buffer): Promise<UploadApiResponse> {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: cloudinaryFolder,
+        public_id: `${Date.now()}-${randomUUID()}`,
+        resource_type: "image",
+        overwrite: false,
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error ?? new Error("Cloudinary-Upload fehlgeschlagen."));
+          return;
+        }
+        resolve(result);
+      },
+    );
+    uploadStream.end(buffer);
+  });
+}
+
+function cloudinaryOptimizedUrl(publicId: string, version: number) {
+  return cloudinary.url(publicId, {
+    secure: true,
+    version,
+    quality: "auto",
+    fetch_format: "auto",
+  });
+}
+
+async function deleteCloudinaryImage(publicId: string | undefined) {
+  if (!publicId) return;
+  await cloudinary.uploader
+    .destroy(publicId, { resource_type: "image", invalidate: true })
+    .catch(() => undefined);
 }
 
 export async function GET(request: NextRequest) {
@@ -175,6 +214,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (!isCloudinaryConfigured()) {
+    return NextResponse.json(
+      {
+        message:
+          "Bilder-Upload ist noch nicht eingerichtet. Setze CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY und CLOUDINARY_API_SECRET.",
+        status: "not_configured",
+      },
+      { status: 503 },
+    );
+  }
+
   const formData = await request.formData();
   const files = formData
     .getAll("images")
@@ -219,20 +269,18 @@ export async function POST(request: NextRequest) {
 
   const uploadedImages: MediaImage[] = [];
 
-  for (const { file, buffer } of buffers) {
-    const filename = createFilename(file);
-    const blob = await put(`uploads/${filename}`, buffer, {
-      access: "public",
-      addRandomSuffix: false,
-      contentType: file.type,
-    });
+  for (const { buffer } of buffers) {
+    const result = await uploadImageBuffer(buffer);
 
     uploadedImages.push({
       id: randomUUID(),
-      src: blob.url,
+      src: cloudinaryOptimizedUrl(result.public_id, result.version),
+      publicId: result.public_id,
       title: title || altPrefix || `Fotografie ${uploadedImages.length + 1}`,
       alt: altPrefix || `Fotografie aus der Kategorie ${category}`,
       category,
+      width: result.width,
+      height: result.height,
       useOnHome,
       isPhotographer,
       active: true,
@@ -307,8 +355,20 @@ export async function PATCH(request: NextRequest) {
   const currentImage = images[imageIndex];
   const replacement = formData.get("image");
   let replacementSrc: string | undefined;
+  let replacementPublicId: string | undefined;
 
   if (replacement instanceof File && replacement.size > 0) {
+    if (!isCloudinaryConfigured()) {
+      return NextResponse.json(
+        {
+          message:
+            "Bilder-Upload ist noch nicht eingerichtet. Setze CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY und CLOUDINARY_API_SECRET.",
+          status: "not_configured",
+        },
+        { status: 503 },
+      );
+    }
+
     if (!allowedTypes.has(replacement.type)) {
       return NextResponse.json(
         { message: `${replacement.name} ist kein unterstuetztes Bildformat.` },
@@ -324,17 +384,11 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const filename = createFilename(replacement);
-    const blob = await put(`uploads/${filename}`, buffer, {
-      access: "public",
-      addRandomSuffix: false,
-      contentType: replacement.type,
-    });
-    replacementSrc = blob.url;
+    const result = await uploadImageBuffer(buffer);
+    replacementSrc = cloudinaryOptimizedUrl(result.public_id, result.version);
+    replacementPublicId = result.public_id;
 
-    if (currentImage.src) {
-      await deleteBlob(currentImage.src);
-    }
+    await deleteCloudinaryImage(currentImage.publicId);
   }
 
   const alt = String(formData.get("alt") ?? currentImage.alt).trim();
@@ -342,6 +396,7 @@ export async function PATCH(request: NextRequest) {
   const updatedImage: MediaImage = {
     ...currentImage,
     src: replacementSrc ?? currentImage.src,
+    publicId: replacementPublicId ?? currentImage.publicId,
     title: title || currentImage.title || alt || currentImage.alt,
     alt: alt || currentImage.alt,
     category: normalizeCategoryWithFallback(formData.get("category"), currentImage.category),
@@ -380,9 +435,7 @@ export async function DELETE(request: NextRequest) {
   const image = images.find((item) => item.id === body.id);
   const remainingImages = images.filter((item) => item.id !== body.id);
 
-  if (image?.src) {
-    await deleteBlob(image.src);
-  }
+  await deleteCloudinaryImage(image?.publicId);
 
   await writeImages(remainingImages);
   return NextResponse.json({ images: remainingImages });

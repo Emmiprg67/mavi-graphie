@@ -12,7 +12,7 @@ const requiredFields = [
   "message",
 ] as const;
 
-const CONTACT_RECIPIENT = "mavi.graphie@gmx.de";
+const CONTACT_RECIPIENT = "mavi-graphie@gmx.de";
 
 const fieldLabels: Record<string, string> = {
   firstName: "Vorname",
