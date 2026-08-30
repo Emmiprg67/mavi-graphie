@@ -1,26 +1,24 @@
 export const legalPlaceholders = {
-  operatorName: "[VOLLSTÄNDIGEN NAMEN EINTRAGEN]",
-  street: "[STRASSE UND HAUSNUMMER EINTRAGEN]",
-  city: "[PLZ UND ORT EINTRAGEN]",
-  email: "[E-MAIL-ADRESSE EINTRAGEN]",
-  phone: "[TELEFONNUMMER EINTRAGEN]",
-  vatId: "[UMSATZSTEUER-ID EINTRAGEN - FALLS VORHANDEN]",
-  register: "[REGISTERANGABEN EINTRAGEN - FALLS VORHANDEN]",
-  supervisoryAuthority: "[ZUSTÄNDIGE AUFSICHTSBEHÖRDE PRÜFEN]",
-  hostingProvider: "[HOSTING-ANBIETER PRÜFEN UND EINTRAGEN]",
+  operatorName: "[Vollständiger Name des Inhabers]",
+  street: "[Straße und Hausnummer]",
+  city: "[PLZ und Ort]",
+  phone: "[Telefonnummer]",
+  supervisoryAuthority: "[Zuständige Aufsichtsbehörde]",
+  hostingProvider: "[Hosting-Anbieter]",
   storageProvider:
     "Cloudinary (Cloudinary Ltd., USA) für hochgeladene Bilddateien; Vercel Blob (Vercel Inc., USA) für den internen Bildindex (Metadaten)",
-  retention: "[SPEICHERDAUER PRÜFEN]",
+  retention: "[Speicherdauer der Server-Logdaten]",
 };
 
 export const legalConfig = {
+  taxStatus: "Kleinunternehmer gemäß § 19 UStG – keine Umsatzsteuer-ID.",
   services: {
     hosting: legalPlaceholders.hostingProvider,
     uploads: legalPlaceholders.storageProvider,
     contactApi:
       "Kontaktformular über /api/contact; Versand per E-Mail über Resend (Resend Inc., USA) an das Postfach des Betreibers.",
     admin:
-      "Admin-Uploadbereich mit optionalem ADMIN_UPLOAD_TOKEN. Der Token wird nicht öffentlich angezeigt.",
+      "Admin-Uploadbereich zur Verwaltung der Fotografien, geschützt durch ein Login für den Betreiber.",
     instagram:
       "Externer Link zum Instagram-Profil. Es ist kein Instagram-Feed und kein Pixel eingebettet.",
     analytics:

@@ -3,7 +3,7 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { LegalPage } from "@/components/LegalPage";
 import { brand } from "@/data/siteContent";
-import { legalPlaceholders } from "@/data/legalContent";
+import { legalConfig, legalPlaceholders } from "@/data/legalContent";
 
 export const metadata: Metadata = {
   title: "Impressum",
@@ -21,13 +21,15 @@ export default function ImpressumPage() {
         warning="Dieses Impressum enthält noch Platzhalter und muss vor der Veröffentlichung mit den echten Angaben des Betreibers vervollständigt und rechtlich geprüft werden."
         sections={[
           {
-            title: "Angaben zum Anbieter",
+            title: "Angaben gemäß § 5 DDG",
             children: (
               <>
                 <p>{legalPlaceholders.operatorName}</p>
-                <p>{brand.name}</p>
                 <p>{legalPlaceholders.street}</p>
                 <p>{legalPlaceholders.city}</p>
+                <p className="text-sm text-muted">
+                  Ladungsfähige Anschrift erforderlich – kein Postfach.
+                </p>
               </>
             ),
           },
@@ -35,49 +37,21 @@ export default function ImpressumPage() {
             title: "Kontakt",
             children: (
               <>
-                <p>E-Mail: {legalPlaceholders.email}</p>
                 <p>Telefon: {legalPlaceholders.phone}</p>
+                <p>E-Mail: {brand.email}</p>
               </>
             ),
           },
           {
-            title: "Vertretungsberechtigte Person",
+            title: "Steuerliche Angaben",
+            children: <p>{legalConfig.taxStatus}</p>,
+          },
+          {
+            title: "Verantwortlich für den Inhalt",
             children: (
               <p>
-                {legalPlaceholders.operatorName}{" "}
-                <span className="text-muted">
-                  - bitte nur ausfüllen, wenn diese Angabe für die Rechtsform
-                  erforderlich ist.
-                </span>
-              </p>
-            ),
-          },
-          {
-            title: "Registereintrag",
-            children: <p>{legalPlaceholders.register}</p>,
-          },
-          {
-            title: "Umsatzsteuer- oder Wirtschafts-ID",
-            children: <p>{legalPlaceholders.vatId}</p>,
-          },
-          {
-            title: "Verantwortlich für redaktionelle Inhalte",
-            children: (
-              <>
-                <p>{legalPlaceholders.operatorName}</p>
-                <p>{legalPlaceholders.street}</p>
-                <p>{legalPlaceholders.city}</p>
-              </>
-            ),
-          },
-          {
-            title: "Haftungshinweise",
-            children: (
-              <p>
-                Die Inhalte dieser Website wurden mit Sorgfalt erstellt. Für die
-                Richtigkeit, Vollständigkeit und Aktualität der Inhalte kann
-                jedoch keine Gewähr übernommen werden. Externe Links führen zu
-                Angeboten Dritter, auf deren Inhalte kein Einfluss besteht.
+                {legalPlaceholders.operatorName}, {legalPlaceholders.street},{" "}
+                {legalPlaceholders.city}
               </p>
             ),
           },

@@ -21,141 +21,136 @@ export default function DatenschutzPage() {
         warning="Diese Datenschutzerklärung enthält noch zu prüfende Angaben und muss vor der Veröffentlichung an die tatsächlich eingesetzten Dienste angepasst und rechtlich geprüft werden."
         sections={[
           {
-            title: "Verantwortliche Stelle",
+            title: "1. Datenschutz auf einen Blick",
+            children: (
+              <p>
+                Die folgenden Hinweise geben einen einfachen Überblick darüber,
+                was mit Ihren personenbezogenen Daten passiert, wenn Sie diese
+                Website besuchen. Personenbezogene Daten sind alle Daten, mit
+                denen Sie persönlich identifiziert werden können.
+                Verantwortliche Stelle, Zwecke der Verarbeitung und Ihre Rechte
+                sind in den folgenden Abschnitten dieser Erklärung
+                zusammengefasst.
+              </p>
+            ),
+          },
+          {
+            title: "2. Verantwortliche Stelle",
             children: (
               <>
+                <p>
+                  Verantwortliche Stelle für die Datenverarbeitung auf dieser
+                  Website ist:
+                </p>
                 <p>{legalPlaceholders.operatorName}</p>
                 <p>{legalPlaceholders.street}</p>
                 <p>{legalPlaceholders.city}</p>
-                <p>Kontakt-E-Mail: {legalPlaceholders.email}</p>
+                <p>Telefon: {legalPlaceholders.phone}</p>
+                <p>E-Mail: {brand.email}</p>
+                <p>
+                  Verantwortliche Stelle ist die natürliche oder juristische
+                  Person, die allein oder gemeinsam mit anderen über die
+                  Zwecke und Mittel der Verarbeitung von personenbezogenen
+                  Daten entscheidet.
+                </p>
               </>
             ),
           },
           {
-            title: "Allgemeine Hinweise zur Datenverarbeitung",
+            title: "3. Nutzung Ihrer Daten",
+            children: (
+              <>
+                <p>
+                  Beim Aufruf dieser Website können durch den Hosting-Anbieter
+                  technisch notwendige Logdaten entstehen, etwa IP-Adresse,
+                  Datum und Uhrzeit des Zugriffs, aufgerufene URL,
+                  Browserinformationen und Serverstatus. Hosting-Anbieter:{" "}
+                  {legalConfig.services.hosting}. Speicherdauer:{" "}
+                  {legalPlaceholders.retention}.
+                </p>
+                <p>
+                  {legalConfig.services.contactApi} Verarbeitet werden dabei
+                  Vorname, Nachname, E-Mail-Adresse, optionale Telefonnummer,
+                  Art des Shootings, Wunschtermin, Ort oder Location,
+                  optionales Budget, optionale Personenanzahl, Nachricht und
+                  die Datenschutz-Zustimmung. Zweck ist ausschließlich die
+                  Bearbeitung Ihrer Anfrage.
+                </p>
+                <p>
+                  {legalConfig.services.admin} Hochgeladene Fotografien werden
+                  über {legalConfig.services.uploads} gespeichert und
+                  ausgeliefert (siehe Abschnitt 7 „Externe Inhalte“).
+                </p>
+              </>
+            ),
+          },
+          {
+            title: "4. Besucherzähler",
             children: (
               <p>
-                Personenbezogene Daten werden verarbeitet, soweit dies für den
-                Betrieb der Website, die Bearbeitung von Anfragen, die
-                Verwaltung hochgeladener Bilder oder die technische Sicherheit
-                erforderlich ist. Rechtsgrundlagen, Speicherfristen und
-                Verantwortlichkeiten sind vor Veröffentlichung mit den echten
-                Betreiberangaben zu prüfen.
+                Diese Website setzt keinen Besucherzähler und keine Analyse-
+                oder Statistik-Tools ein. {legalConfig.services.analytics}{" "}
+                {legalConfig.services.cookies} Es werden keine
+                Nutzungsprofile erstellt.
               </p>
             ),
           },
           {
-            title: "Hosting und Server-Logfiles",
-            children: (
-              <>
-                <p>Hosting-Anbieter: {legalConfig.services.hosting}</p>
-                <p>
-                  Beim Aufruf der Website können technisch notwendige Logdaten
-                  entstehen, etwa IP-Adresse, Datum und Uhrzeit des Zugriffs,
-                  aufgerufene URL, Browserinformationen und Serverstatus. Die
-                  konkrete Speicherdauer hängt vom eingesetzten Hosting ab:
-                  {` ${legalPlaceholders.retention}`}.
-                </p>
-              </>
-            ),
-          },
-          {
-            title: "Kontaktaufnahme über das Formular",
-            children: (
-              <>
-                <p>
-                  Das Kontaktformular verarbeitet Vorname, Nachname,
-                  E-Mail-Adresse, optionale Telefonnummer, Art des Shootings,
-                  Wunschtermin, Ort oder Location, optionales Budget, optionale
-                  Personenanzahl, Nachricht und die Datenschutz-Zustimmung.
-                </p>
-                <p>
-                  Zweck ist die Bearbeitung der Anfrage. Serverseitig wird die
-                  Datenschutz-Zustimmung geprüft. Ein Versand findet nur statt,
-                  wenn ein Kontakt-Webhook über CONTACT_WEBHOOK_URL konfiguriert
-                  ist. Zugangsdaten und Umgebungsvariablen werden nicht auf der
-                  Website ausgegeben.
-                </p>
-              </>
-            ),
-          },
-          {
-            title: "Adminbereich, Upload und Bilderverwaltung",
-            children: (
-              <>
-                <p>{legalConfig.services.admin}</p>
-                <p>
-                  Hochgeladene Bilder werden mit Kategorie, Alt-Text,
-                  Startseiten-Markierung, Fotografenbild-Markierung und
-                  Erstellungsdatum in der vorhandenen Medienverwaltung
-                  gespeichert. Bildspeicher: {legalConfig.services.uploads}.
-                </p>
-              </>
-            ),
-          },
-          {
-            title: "Cookies und ähnliche Technologien",
-            children: (
-              <>
-                <p>{legalConfig.services.cookies}</p>
-                <p>
-                  Nach aktueller Projektprüfung sind keine Analyse-, Marketing-
-                  oder Social-Media-Embeds vorhanden, die ein
-                  Einwilligungsbanner erfordern würden. Sollte später Tracking,
-                  Statistik, eingebettete Inhalte oder nicht notwendige Cookies
-                  ergänzt werden, muss eine echte Einwilligungslösung
-                  eingerichtet werden.
-                </p>
-              </>
-            ),
-          },
-          {
-            title: "Externe Links zu Instagram",
+            title: "5. Ihre Rechte",
             children: (
               <p>
-                Die Website enthält einen normalen externen Link zum
-                Instagram-Profil. Beim Anklicken verlässt du diese Website; für
-                die Verarbeitung auf Instagram gelten die Datenschutzbedingungen
-                des jeweiligen Anbieters. Es ist kein Instagram-Feed eingebettet.
+                Sie können jederzeit unentgeltlich Auskunft über Herkunft,
+                Empfänger und Zweck Ihrer gespeicherten personenbezogenen
+                Daten verlangen sowie Berichtigung, Löschung oder
+                Einschränkung der Verarbeitung dieser Daten fordern. Erteilte
+                Einwilligungen können Sie jederzeit mit Wirkung für die
+                Zukunft widerrufen. Außerdem steht Ihnen ein Recht auf
+                Datenübertragbarkeit sowie ein Widerspruchsrecht gegen die
+                Verarbeitung Ihrer Daten zu.
               </p>
             ),
           },
           {
-            title: "Analyse- und Statistikdienste",
-            children: <p>{legalConfig.services.analytics}</p>,
-          },
-          {
-            title: "Empfänger und Auftragsverarbeiter",
+            title: "6. SSL-/TLS-Verschlüsselung",
             children: (
               <p>
-                Mögliche Empfänger sind der Hosting-Anbieter, technisch
-                erforderliche Dienstleister und, falls eingerichtet, der
-                Kontakt-Webhook-Anbieter. Diese Angaben müssen vor
-                Veröffentlichung mit den tatsächlich eingesetzten Diensten
-                abgeglichen werden.
+                Diese Website nutzt aus Sicherheitsgründen und zum Schutz der
+                Übertragung vertraulicher Inhalte, wie zum Beispiel Anfragen
+                über das Kontaktformular, eine SSL-/TLS-Verschlüsselung. Eine
+                verschlüsselte Verbindung erkennen Sie daran, dass die
+                Adresszeile des Browsers von „http://“ auf „https://“
+                wechselt und an dem Schloss-Symbol in Ihrer Browserzeile. Ist
+                die SSL- bzw. TLS-Verschlüsselung aktiviert, können die
+                Daten, die Sie an diese Website übermitteln, nicht von
+                Dritten mitgelesen werden.
               </p>
             ),
           },
           {
-            title: "Rechte betroffener Personen",
+            title: "7. Externe Inhalte",
             children: (
-              <p>
-                Betroffene Personen können je nach gesetzlicher Voraussetzung
-                Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung,
-                Datenübertragbarkeit sowie Widerspruch verlangen. Einwilligungen
-                können mit Wirkung für die Zukunft widerrufen werden. Außerdem
-                besteht ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde:
-                {` ${legalPlaceholders.supervisoryAuthority}`}.
-              </p>
+              <>
+                <p>
+                  Fotografien auf dieser Website werden über den Cloud-Dienst
+                  Cloudinary (Cloudinary Ltd., USA) ausgeliefert. Beim Aufruf
+                  von Seiten mit eingebundenen Bildern wird eine Verbindung zu
+                  Servern von Cloudinary hergestellt, wodurch technische
+                  Daten wie Ihre IP-Adresse an Cloudinary übermittelt werden
+                  können.
+                </p>
+                <p>{legalConfig.services.instagram}</p>
+              </>
             ),
           },
           {
-            title: "Aktualität",
+            title: "8. Beschwerderecht, Kontakt zum Datenschutz",
             children: (
               <p>
-                Diese Datenschutzerklärung bildet den aktuellen Projektstand ab
-                und muss angepasst werden, sobald Hosting, Speicher, Versand,
-                Analyse, Cookies oder externe Dienste geändert werden.
+                Ihnen steht im Falle datenschutzrechtlicher Verstöße ein
+                Beschwerderecht bei der zuständigen Aufsichtsbehörde zu:{" "}
+                {legalPlaceholders.supervisoryAuthority}. Bei Fragen zum
+                Datenschutz können Sie uns jederzeit unter der oben genannten
+                Kontakt-E-Mail-Adresse ({brand.email}) erreichen.
               </p>
             ),
           },
