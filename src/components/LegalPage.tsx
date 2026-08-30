@@ -7,7 +7,6 @@ type LegalPageProps = {
   eyebrow: string;
   title: string;
   intro: string;
-  warning: string;
   sections: LegalSection[];
 };
 
@@ -15,7 +14,6 @@ export function LegalPage({
   eyebrow,
   title,
   intro,
-  warning,
   sections,
 }: LegalPageProps) {
   return (
@@ -28,10 +26,6 @@ export function LegalPage({
           </h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-muted">{intro}</p>
         </div>
-
-        <p className="mb-12 border-l-4 border-gold bg-mist px-5 py-4 text-base leading-7 text-graphite">
-          {warning}
-        </p>
 
         <div className="grid gap-10">
           {sections.map((section) => (

@@ -18,18 +18,13 @@ export default function ImpressumPage() {
         eyebrow="Rechtliches"
         title="Impressum"
         intro={`Anbieterinformationen für die Website ${brand.name}.`}
-        warning="Dieses Impressum enthält noch Platzhalter und muss vor der Veröffentlichung mit den echten Angaben des Betreibers vervollständigt und rechtlich geprüft werden."
         sections={[
           {
             title: "Angaben gemäß § 5 DDG",
             children: (
               <>
                 <p>{legalPlaceholders.operatorName}</p>
-                <p>{legalPlaceholders.street}</p>
                 <p>{legalPlaceholders.city}</p>
-                <p className="text-sm text-muted">
-                  Ladungsfähige Anschrift erforderlich – kein Postfach.
-                </p>
               </>
             ),
           },
@@ -50,8 +45,7 @@ export default function ImpressumPage() {
             title: "Verantwortlich für den Inhalt",
             children: (
               <p>
-                {legalPlaceholders.operatorName}, {legalPlaceholders.street},{" "}
-                {legalPlaceholders.city}
+                {legalPlaceholders.operatorName}, {legalPlaceholders.city}
               </p>
             ),
           },

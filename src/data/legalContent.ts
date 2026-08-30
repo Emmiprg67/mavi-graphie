@@ -1,8 +1,7 @@
 export const legalPlaceholders = {
-  operatorName: "[Vollständiger Name des Inhabers]",
-  street: "[Straße und Hausnummer]",
-  city: "[PLZ und Ort]",
-  phone: "[Telefonnummer]",
+  operatorName: "Vildan Gedik",
+  city: "45772 Marl",
+  phone: "015906164702",
   supervisoryAuthority: "[Zuständige Aufsichtsbehörde]",
   hostingProvider: "[Hosting-Anbieter]",
   storageProvider:

@@ -18,7 +18,6 @@ export default function DatenschutzPage() {
         eyebrow="Datenschutz"
         title="Datenschutzerklärung"
         intro={`Diese Hinweise beschreiben, welche Daten bei der Nutzung von ${brand.name} nach dem derzeitigen technischen Stand des Projekts verarbeitet werden können.`}
-        warning="Diese Datenschutzerklärung enthält noch zu prüfende Angaben und muss vor der Veröffentlichung an die tatsächlich eingesetzten Dienste angepasst und rechtlich geprüft werden."
         sections={[
           {
             title: "1. Datenschutz auf einen Blick",
@@ -43,7 +42,6 @@ export default function DatenschutzPage() {
                   Website ist:
                 </p>
                 <p>{legalPlaceholders.operatorName}</p>
-                <p>{legalPlaceholders.street}</p>
                 <p>{legalPlaceholders.city}</p>
                 <p>Telefon: {legalPlaceholders.phone}</p>
                 <p>E-Mail: {brand.email}</p>
