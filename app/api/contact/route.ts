@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
+    console.error("Resend send failed:", error);
     return NextResponse.json(
       {
         message:
