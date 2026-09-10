@@ -50,6 +50,18 @@ body.lightbox-open {
   overflow: hidden;
 }
 
+.mobile-nav-overlay {
+  background: rgba(20, 20, 20, 0.94);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .mobile-nav-overlay {
+    background: rgba(0, 0, 0, 0.7);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+}
+
 img {
   max-width: 100%;
 }

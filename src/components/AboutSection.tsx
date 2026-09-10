@@ -56,10 +56,10 @@ export function AboutSection() {
 
       <div className="section-shell relative">
         <div className="mb-12 grid gap-6 lg:grid-cols-[0.65fr_1fr] lg:items-end">
-          <p className="eyebrow">Ueber mich</p>
+          <p className="eyebrow">Über mich</p>
           <p className="max-w-2xl text-lg leading-8 text-muted lg:justify-self-end">
             Eine ruhige Begleitung, ein geschulter Blick und genug Raum, damit
-            sich echte Naehe vor der Kamera entfalten kann.
+            sich echte Nähe vor der Kamera entfalten kann.
           </p>
         </div>
 
@@ -147,7 +147,7 @@ export function AboutSection() {
                 Haltung
               </p>
               <p className="mt-4 font-serif text-2xl leading-tight">
-                Natuerlich. Elegant. Nah.
+                Natürlich. Elegant. Nah.
               </p>
             </div>
           </div>

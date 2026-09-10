@@ -26,7 +26,7 @@ export function EditorialWeddingSection() {
           <AnimatedHeading
             id="editorial-title"
             eyebrow="Hochzeitsreportagen"
-            title="Ein ruhiger Blick fuer grosse Gefuehle."
+            title="Ein ruhiger Blick für große Gefühle."
             className="serif-heading text-[2.35rem] uppercase text-graphite md:text-[3.65rem]"
           />
           <p className="mt-8 text-lg leading-9 text-muted">

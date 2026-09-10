@@ -2,11 +2,13 @@ export const legalPlaceholders = {
   operatorName: "Vildan Gedik",
   city: "45772 Marl",
   phone: "015906164702",
-  supervisoryAuthority: "[Zuständige Aufsichtsbehörde]",
-  hostingProvider: "[Hosting-Anbieter]",
+  supervisoryAuthority:
+    "Landesbeauftragte für Datenschutz und Informationsfreiheit Nordrhein-Westfalen (LDI NRW)",
+  hostingProvider: "Vercel Inc., USA",
   storageProvider:
     "Cloudinary (Cloudinary Ltd., USA) für hochgeladene Bilddateien; Vercel Blob (Vercel Inc., USA) für den internen Bildindex (Metadaten)",
-  retention: "[Speicherdauer der Server-Logdaten]",
+  retention:
+    "so lange, wie es für den jeweiligen Verarbeitungszweck erforderlich ist bzw. wie es die Standard-Aufbewahrungsfristen des Hosting-Anbieters vorsehen",
 };
 
 export const legalConfig = {

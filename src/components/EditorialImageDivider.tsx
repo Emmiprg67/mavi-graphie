@@ -39,7 +39,7 @@ export function EditorialImageDivider() {
         <div className="max-w-xl">
           <p className="eyebrow mb-5 text-mist">Details</p>
           <h2 className="serif-heading text-[2.4rem] uppercase md:text-[4rem]">
-            Zwischen den grossen Momenten liegt die Erinnerung.
+            Zwischen den großen Momenten liegt die Erinnerung.
           </h2>
         </div>
       </div>
