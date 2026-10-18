@@ -23,4 +23,13 @@ export type MediaImage = {
   isCategoryCover?: boolean;
   active?: boolean;
   createdAt?: string;
+  /** When set, this image belongs to an album and is hidden from the normal gallery/home views. */
+  albumId?: string;
+};
+
+export type MediaAlbum = {
+  id: string;
+  title: string;
+  coverImageId?: string;
+  createdAt?: string;
 };

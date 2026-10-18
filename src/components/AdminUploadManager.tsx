@@ -10,9 +10,11 @@ import {
   useRef,
   useState,
 } from "react";
-import type { MediaCategory, MediaImage } from "@/types/media";
+import type { MediaAlbum, MediaCategory, MediaImage } from "@/types/media";
 import { brand } from "@/data/siteContent";
 import { AdminLogoutButton } from "./AdminLogoutButton";
+
+type AdminAlbum = MediaAlbum & { coverSrc?: string; imageCount: number };
 
 const categories: MediaCategory[] = [
   "Slider",
@@ -25,6 +27,8 @@ const categories: MediaCategory[] = [
   "Standesamt",
   "Sonstiges",
 ];
+
+const NEW_ALBUM_VALUE = "__new__";
 
 function imageTitle(image: MediaImage) {
   return image.title || image.alt || image.category;
@@ -63,11 +67,16 @@ function uploadWithProgress(
 
 export function AdminUploadManager() {
   const [images, setImages] = useState<MediaImage[]>([]);
+  const [albums, setAlbums] = useState<AdminAlbum[]>([]);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadDestination, setUploadDestination] = useState<"gallery" | "album">("gallery");
+  const [uploadAlbumChoice, setUploadAlbumChoice] = useState("");
+  const [uploadNewAlbumTitle, setUploadNewAlbumTitle] = useState("");
+  const [newAlbumName, setNewAlbumName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const stats = useMemo(
@@ -94,8 +103,23 @@ export function AdminUploadManager() {
     setImages(data.images);
   }
 
+  async function loadAlbums() {
+    const response = await fetch("/api/albums?includeInactive=true", {
+      cache: "no-store",
+    });
+
+    if (response.status === 401) {
+      window.location.assign("/admin/login");
+      return;
+    }
+
+    const data = (await response.json()) as { albums: AdminAlbum[] };
+    setAlbums(data.albums ?? []);
+  }
+
   useEffect(() => {
     loadImages();
+    loadAlbums();
   }, []);
 
   function setFilesFromInput(event: ChangeEvent<HTMLInputElement>) {
@@ -121,6 +145,49 @@ export function AdminUploadManager() {
       return;
     }
 
+    let resolvedAlbumId = "";
+
+    if (uploadDestination === "album") {
+      if (uploadAlbumChoice === NEW_ALBUM_VALUE) {
+        const title = uploadNewAlbumTitle.trim();
+        if (!title) {
+          setMessage("Bitte einen Titel für das neue Album angeben.");
+          return;
+        }
+
+        setBusy(true);
+        try {
+          const response = await fetch("/api/albums", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title }),
+          });
+          const data = (await response.json()) as {
+            album?: MediaAlbum;
+            message?: string;
+          };
+
+          if (!response.ok || !data.album) {
+            throw new Error(data.message ?? "Album konnte nicht angelegt werden.");
+          }
+
+          resolvedAlbumId = data.album.id;
+          setUploadNewAlbumTitle("");
+          setUploadAlbumChoice(resolvedAlbumId);
+          await loadAlbums();
+        } catch (error) {
+          setBusy(false);
+          setMessage(error instanceof Error ? error.message : "Album konnte nicht angelegt werden.");
+          return;
+        }
+      } else if (uploadAlbumChoice) {
+        resolvedAlbumId = uploadAlbumChoice;
+      } else {
+        setMessage("Bitte ein Album auswählen oder ein neues Album anlegen.");
+        return;
+      }
+    }
+
     setBusy(true);
     setMessage("");
     setUploadProgress(4);
@@ -128,16 +195,25 @@ export function AdminUploadManager() {
     const form = new FormData(formElement);
     form.delete("images");
     selectedFiles.forEach((file) => form.append("images", file));
-    form.set("useOnHome", form.get("useOnHome") ? "true" : "false");
-    form.set("isPhotographer", form.get("isPhotographer") ? "true" : "false");
+
+    if (uploadDestination === "album") {
+      form.set("albumId", resolvedAlbumId);
+    } else {
+      form.delete("albumId");
+      form.set("useOnHome", form.get("useOnHome") ? "true" : "false");
+      form.set("isPhotographer", form.get("isPhotographer") ? "true" : "false");
+    }
 
     try {
       await uploadWithProgress(form, setUploadProgress);
       setUploadProgress(100);
       setMessage("Upload abgeschlossen. Die Bilder sind jetzt verwaltbar.");
       setSelectedFiles([]);
+      setUploadDestination("gallery");
+      setUploadAlbumChoice("");
       formElement.reset();
       await loadImages();
+      await loadAlbums();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Upload fehlgeschlagen.");
     } finally {
@@ -173,6 +249,7 @@ export function AdminUploadManager() {
       setImages(data.images ?? []);
       setMessage("Bild wurde gespeichert.");
       event.currentTarget.reset();
+      await loadAlbums();
     } else if (response.status === 401) {
       window.location.assign("/admin/login");
     } else {
@@ -221,6 +298,7 @@ export function AdminUploadManager() {
 
     if (response.ok) {
       await loadImages();
+      await loadAlbums();
       setMessage("Bild wurde geloescht.");
     } else if (response.status === 401) {
       window.location.assign("/admin/login");
@@ -228,6 +306,121 @@ export function AdminUploadManager() {
       const data = (await response.json()) as { message?: string };
       setMessage(data.message ?? "Das Bild konnte nicht geloescht werden.");
     }
+  }
+
+  async function createAlbum(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const title = newAlbumName.trim();
+    if (!title || busy) return;
+
+    setBusy(true);
+    setMessage("");
+
+    const response = await fetch("/api/albums", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    });
+    const data = (await response.json()) as { message?: string };
+
+    if (response.ok) {
+      setNewAlbumName("");
+      setMessage("Album wurde angelegt.");
+      await loadAlbums();
+    } else if (response.status === 401) {
+      window.location.assign("/admin/login");
+    } else {
+      setMessage(data.message ?? "Album konnte nicht angelegt werden.");
+    }
+
+    setBusy(false);
+  }
+
+  async function renameAlbum(event: FormEvent<HTMLFormElement>, albumId: string) {
+    event.preventDefault();
+    if (busy) return;
+
+    const form = new FormData(event.currentTarget);
+    const title = String(form.get("title") ?? "").trim();
+    if (!title) return;
+
+    setBusy(true);
+    setMessage("");
+
+    const response = await fetch("/api/albums", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: albumId, title }),
+    });
+    const data = (await response.json()) as { message?: string };
+
+    if (response.ok) {
+      setMessage("Album wurde gespeichert.");
+      await loadAlbums();
+    } else if (response.status === 401) {
+      window.location.assign("/admin/login");
+    } else {
+      setMessage(data.message ?? "Album konnte nicht gespeichert werden.");
+    }
+
+    setBusy(false);
+  }
+
+  async function setAlbumCover(albumId: string, imageId: string) {
+    if (busy) return;
+
+    setBusy(true);
+    setMessage("");
+
+    const response = await fetch("/api/albums", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: albumId, coverImageId: imageId }),
+    });
+    const data = (await response.json()) as { message?: string };
+
+    if (response.ok) {
+      setMessage("Cover wurde aktualisiert.");
+      await loadAlbums();
+    } else if (response.status === 401) {
+      window.location.assign("/admin/login");
+    } else {
+      setMessage(data.message ?? "Cover konnte nicht aktualisiert werden.");
+    }
+
+    setBusy(false);
+  }
+
+  async function deleteAlbum(albumId: string, title: string) {
+    if (
+      !window.confirm(
+        `Album "${title}" wirklich löschen? Alle enthaltenen Fotos werden ebenfalls gelöscht.`,
+      )
+    ) {
+      return;
+    }
+
+    setBusy(true);
+    setMessage("");
+
+    const response = await fetch("/api/albums", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: albumId }),
+    });
+
+    if (response.ok) {
+      setMessage("Album wurde gelöscht.");
+      await loadImages();
+      await loadAlbums();
+    } else if (response.status === 401) {
+      window.location.assign("/admin/login");
+    } else {
+      const data = (await response.json()) as { message?: string };
+      setMessage(data.message ?? "Album konnte nicht gelöscht werden.");
+    }
+
+    setBusy(false);
   }
 
   return (
@@ -249,6 +442,9 @@ export function AdminUploadManager() {
           <nav className="mt-10 hidden gap-2 lg:grid" aria-label="Admin Navigation">
             <a className="border border-white/15 bg-white/8 px-4 py-3 text-sm" href="#upload">
               Upload
+            </a>
+            <a className="border border-white/10 px-4 py-3 text-sm text-white/72" href="#alben">
+              Alben
             </a>
             <a className="border border-white/10 px-4 py-3 text-sm text-white/72" href="#bilder">
               Bilder
@@ -272,8 +468,8 @@ export function AdminUploadManager() {
                 Bilder verwalten
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
-                Kuratiere Hero, Slider, Galerie und Editorial-Bereiche aus einem
-                zentralen Medienbestand.
+                Kuratiere Hero, Slider, Galerie, Alben und Editorial-Bereiche aus
+                einem zentralen Medienbestand.
               </p>
             </div>
 
@@ -285,12 +481,13 @@ export function AdminUploadManager() {
             </a>
           </header>
 
-          <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {[
               ["Bilder", stats.total],
               ["Sichtbar", stats.visible],
               ["Homepage", stats.home],
               ["Fotograf", stats.photographer],
+              ["Alben", albums.length],
             ].map(([label, value]) => (
               <div key={label} className="border border-line bg-white p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">
@@ -309,9 +506,10 @@ export function AdminUploadManager() {
                   Neue Bildserie
                 </h2>
                 <p className="mt-4 text-sm leading-6 text-muted">
-                  Ziehe Bilder direkt hinein oder waehle Dateien aus. Titel,
-                  Kategorie und Sichtbarkeit werden fuer alle ausgewaehlten
-                  Bilder gesetzt und spaeter pro Card feinjustiert.
+                  Ziehe Bilder direkt hinein oder waehle Dateien aus. Entscheide,
+                  ob die Bilder in die normale Galerie (mit Kategorie) oder in
+                  ein Album kommen. Album-Bilder erscheinen ausschliesslich im
+                  jeweiligen Album.
                 </p>
               </div>
 
@@ -353,37 +551,98 @@ export function AdminUploadManager() {
                   </span>
                 </label>
 
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <label className="flex min-h-12 items-center gap-3 border border-line bg-ivory px-4 text-sm font-semibold">
+                    <input
+                      type="radio"
+                      name="destination"
+                      value="gallery"
+                      checked={uploadDestination === "gallery"}
+                      onChange={() => setUploadDestination("gallery")}
+                      className="h-4 w-4 accent-clay"
+                    />
+                    Galerie (mit Kategorie)
+                  </label>
+                  <label className="flex min-h-12 items-center gap-3 border border-line bg-ivory px-4 text-sm font-semibold">
+                    <input
+                      type="radio"
+                      name="destination"
+                      value="album"
+                      checked={uploadDestination === "album"}
+                      onChange={() => setUploadDestination("album")}
+                      className="h-4 w-4 accent-clay"
+                    />
+                    Album
+                  </label>
+                </div>
+
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="grid gap-2 text-sm font-semibold">
                     Titel
                     <input name="title" placeholder="Serie oder Bildtitel" />
                   </label>
 
-                  <label className="grid gap-2 text-sm font-semibold">
-                    Kategorie
-                    <select name="category" defaultValue="Hochzeit">
-                      {categories.map((category) => (
-                        <option key={category}>{category}</option>
-                      ))}
-                    </select>
-                  </label>
+                  {uploadDestination === "gallery" ? (
+                    <label className="grid gap-2 text-sm font-semibold">
+                      Kategorie
+                      <select name="category" defaultValue="Hochzeit">
+                        {categories.map((category) => (
+                          <option key={category}>{category}</option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : (
+                    <label className="grid gap-2 text-sm font-semibold">
+                      Album
+                      <select
+                        value={uploadAlbumChoice}
+                        onChange={(event) => setUploadAlbumChoice(event.target.value)}
+                      >
+                        <option value="">Album auswaehlen...</option>
+                        {albums.map((album) => (
+                          <option key={album.id} value={album.id}>
+                            {album.title}
+                          </option>
+                        ))}
+                        <option value={NEW_ALBUM_VALUE}>+ Neues Album anlegen</option>
+                      </select>
+                    </label>
+                  )}
                 </div>
+
+                {uploadDestination === "album" && uploadAlbumChoice === NEW_ALBUM_VALUE ? (
+                  <label className="grid gap-2 text-sm font-semibold">
+                    Neuer Albumtitel
+                    <input
+                      value={uploadNewAlbumTitle}
+                      onChange={(event) => setUploadNewAlbumTitle(event.target.value)}
+                      placeholder="z. B. Sarah &amp; Immanuel"
+                    />
+                  </label>
+                ) : null}
 
                 <label className="grid gap-2 text-sm font-semibold">
                   Alt-Text
                   <input name="alt" placeholder="Kurze Beschreibung fuer Barrierefreiheit" />
                 </label>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="flex min-h-12 items-center gap-3 border border-line bg-ivory px-4 text-sm">
-                    <input name="useOnHome" type="checkbox" defaultChecked className="h-4 w-4 accent-clay" />
-                    Homepage-Slider
-                  </label>
-                  <label className="flex min-h-12 items-center gap-3 border border-line bg-ivory px-4 text-sm">
-                    <input name="isPhotographer" type="checkbox" className="h-4 w-4 accent-clay" />
-                    Fotografenbild
-                  </label>
-                </div>
+                {uploadDestination === "gallery" ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="flex min-h-12 items-center gap-3 border border-line bg-ivory px-4 text-sm">
+                      <input name="useOnHome" type="checkbox" defaultChecked className="h-4 w-4 accent-clay" />
+                      Homepage-Slider
+                    </label>
+                    <label className="flex min-h-12 items-center gap-3 border border-line bg-ivory px-4 text-sm">
+                      <input name="isPhotographer" type="checkbox" className="h-4 w-4 accent-clay" />
+                      Fotografenbild
+                    </label>
+                  </div>
+                ) : (
+                  <p className="border border-line bg-ivory px-4 py-3 text-sm text-muted">
+                    Album-Bilder erscheinen nicht im Homepage-Slider, in der
+                    normalen Galerie oder im Fotografen-Bereich.
+                  </p>
+                )}
 
                 {uploadProgress > 0 ? (
                   <div className="h-2 overflow-hidden bg-line">
@@ -410,6 +669,135 @@ export function AdminUploadManager() {
               {message}
             </p>
           ) : null}
+
+          <section id="alben" className="mt-10">
+            <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+              <div>
+                <p className="eyebrow">Alben</p>
+                <h2 className="serif-heading mt-2 text-3xl uppercase">
+                  Alben verwalten
+                </h2>
+              </div>
+              <p className="text-sm text-muted">
+                Album-Fotos erscheinen nur im jeweiligen Album, nie in der
+                Galerie, im Slider oder im Fotografen-Bereich.
+              </p>
+            </div>
+
+            <form
+              onSubmit={createAlbum}
+              className="mb-6 flex flex-wrap items-end gap-3 border border-line bg-white p-5"
+            >
+              <label className="grid min-w-[220px] flex-1 gap-2 text-sm font-semibold">
+                Neues Album
+                <input
+                  value={newAlbumName}
+                  onChange={(event) => setNewAlbumName(event.target.value)}
+                  placeholder="z. B. Sarah & Immanuel"
+                  className="min-h-11"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={busy || !newAlbumName.trim()}
+                className="min-h-11 bg-graphite px-6 text-sm font-bold uppercase tracking-normal text-white transition hover:bg-clay disabled:opacity-60"
+              >
+                Album anlegen
+              </button>
+            </form>
+
+            {albums.length === 0 ? (
+              <p className="border border-line bg-white p-8 text-muted">
+                Es wurden noch keine Alben angelegt.
+              </p>
+            ) : (
+              <div className="grid gap-5 xl:grid-cols-2">
+                {albums.map((album) => {
+                  const albumImages = images.filter((image) => image.albumId === album.id);
+
+                  return (
+                    <article key={album.id} className="border border-line bg-white p-5">
+                      <div className="flex items-start gap-4">
+                        <div className="relative h-20 w-28 flex-shrink-0 overflow-hidden bg-linen">
+                          {album.coverSrc ? (
+                            <Image
+                              src={album.coverSrc}
+                              alt={album.title}
+                              fill
+                              sizes="140px"
+                              className="object-cover"
+                            />
+                          ) : null}
+                        </div>
+
+                        <form
+                          onSubmit={(event) => renameAlbum(event, album.id)}
+                          className="flex flex-1 flex-wrap gap-2"
+                        >
+                          <input
+                            name="title"
+                            defaultValue={album.title}
+                            className="min-h-11 flex-1"
+                          />
+                          <button
+                            type="submit"
+                            disabled={busy}
+                            className="min-h-11 bg-graphite px-4 text-xs font-bold uppercase tracking-normal text-white transition hover:bg-clay disabled:opacity-60"
+                          >
+                            Speichern
+                          </button>
+                        </form>
+                      </div>
+
+                      <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-muted">
+                        {albumImages.length} {albumImages.length === 1 ? "Foto" : "Fotos"}
+                      </p>
+
+                      {albumImages.length > 0 ? (
+                        <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
+                          {albumImages.map((albumImage) => (
+                            <button
+                              key={albumImage.id}
+                              type="button"
+                              disabled={busy}
+                              onClick={() => setAlbumCover(album.id, albumImage.id)}
+                              className={`relative h-16 w-16 flex-shrink-0 overflow-hidden border-2 transition ${
+                                album.coverImageId === albumImage.id
+                                  ? "border-clay"
+                                  : "border-transparent hover:border-line"
+                              }`}
+                              title="Als Cover festlegen"
+                            >
+                              <Image
+                                src={albumImage.src}
+                                alt={albumImage.alt}
+                                fill
+                                sizes="64px"
+                                className="object-cover"
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-sm text-muted">
+                          Noch keine Fotos. Lade oben Bilder mit Ziel "Album"
+                          hoch.
+                        </p>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => deleteAlbum(album.id, album.title)}
+                        className="mt-4 min-h-11 border border-line px-4 text-sm font-semibold transition hover:border-clay hover:text-clay"
+                      >
+                        Album loeschen
+                      </button>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
 
           <section id="bilder" className="mt-10">
             <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -453,13 +841,18 @@ export function AdminUploadManager() {
                           Cover: {image.category}
                         </div>
                       ) : null}
+                      {image.albumId ? (
+                        <div className="absolute left-4 bottom-4 bg-graphite px-3 py-2 text-xs font-bold uppercase tracking-normal text-white">
+                          Album: {albums.find((album) => album.id === image.albumId)?.title ?? "..."}
+                        </div>
+                      ) : null}
                     </div>
 
                     <form
                       onSubmit={(event) => updateImage(event, image.id)}
                       className="grid gap-4 p-5"
                     >
-                      <div className="grid gap-4 md:grid-cols-[1fr_150px]">
+                      <div className="grid gap-4 md:grid-cols-[1fr_150px_170px]">
                         <label className="grid gap-2 text-sm font-semibold">
                           Titel
                           <input
@@ -477,7 +870,29 @@ export function AdminUploadManager() {
                             ))}
                           </select>
                         </label>
+
+                        <label className="grid gap-2 text-sm font-semibold">
+                          Ziel
+                          <select
+                            name="albumId"
+                            defaultValue={image.albumId ?? ""}
+                            className="min-h-11"
+                          >
+                            <option value="">Galerie</option>
+                            {albums.map((album) => (
+                              <option key={album.id} value={album.id}>
+                                {album.title}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
                       </div>
+
+                      <p className="text-xs text-muted">
+                        Hinweis: Wird ein Album als Ziel gewaehlt, wird das Bild
+                        automatisch aus Slider, Galerie und Fotografen-Bereich
+                        entfernt.
+                      </p>
 
                       <label className="grid gap-2 text-sm font-semibold">
                         Alt-Text

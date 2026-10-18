@@ -1,21 +1,20 @@
 import { randomUUID } from "crypto";
-import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
-import { list, put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequest, timingSafeEqual } from "@/lib/adminAuth";
+import {
+  cloudinaryOptimizedUrl,
+  deleteCloudinaryImage,
+  isActiveImage,
+  isCloudinaryConfigured,
+  readAlbums,
+  readImages,
+  uploadImageBuffer,
+  writeImages,
+} from "@/lib/media";
 import type { MediaCategory, MediaImage } from "@/types/media";
 
 export const runtime = "nodejs";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
-
-const cloudinaryFolder = "mavi-graphie/uploads";
-const manifestPathname = "media.json";
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 const categoryValues: MediaCategory[] = [
   "Slider",
@@ -28,28 +27,6 @@ const categoryValues: MediaCategory[] = [
   "Standesamt",
   "Sonstiges",
 ];
-
-async function readImages(): Promise<MediaImage[]> {
-  const { blobs } = await list({ prefix: manifestPathname, limit: 1 });
-  const manifest = blobs.find((blob) => blob.pathname === manifestPathname);
-  if (!manifest) return [];
-
-  const response = await fetch(manifest.url, { cache: "no-store" });
-  if (!response.ok) return [];
-
-  const parsed = await response.json().catch(() => null);
-  return Array.isArray(parsed) ? (parsed as MediaImage[]) : [];
-}
-
-async function writeImages(images: MediaImage[]) {
-  await put(manifestPathname, JSON.stringify(images, null, 2), {
-    access: "public",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: "application/json",
-    cacheControlMaxAge: 0,
-  });
-}
 
 async function canMutate(request: NextRequest) {
   if (await isAdminRequest(request)) return true;
@@ -112,58 +89,14 @@ function normalizeCategoryWithFallback(
   return fallback;
 }
 
+function normalizeAlbumId(value: FormDataEntryValue | null): string | undefined {
+  if (typeof value === "string" && value.trim() !== "") return value.trim();
+  return undefined;
+}
+
 function parseBoolean(value: FormDataEntryValue | null, fallback = false) {
   if (typeof value !== "string") return fallback;
   return value === "true" || value === "on";
-}
-
-function isActive(image: MediaImage) {
-  return image.active !== false;
-}
-
-function isCloudinaryConfigured() {
-  return Boolean(
-    process.env.CLOUDINARY_CLOUD_NAME &&
-      process.env.CLOUDINARY_API_KEY &&
-      process.env.CLOUDINARY_API_SECRET,
-  );
-}
-
-function uploadImageBuffer(buffer: Buffer): Promise<UploadApiResponse> {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: cloudinaryFolder,
-        public_id: `${Date.now()}-${randomUUID()}`,
-        resource_type: "image",
-        overwrite: false,
-      },
-      (error, result) => {
-        if (error || !result) {
-          reject(error ?? new Error("Cloudinary-Upload fehlgeschlagen."));
-          return;
-        }
-        resolve(result);
-      },
-    );
-    uploadStream.end(buffer);
-  });
-}
-
-function cloudinaryOptimizedUrl(publicId: string, version: number) {
-  return cloudinary.url(publicId, {
-    secure: true,
-    version,
-    quality: "auto",
-    fetch_format: "auto",
-  });
-}
-
-async function deleteCloudinaryImage(publicId: string | undefined) {
-  if (!publicId) return;
-  await cloudinary.uploader
-    .destroy(publicId, { resource_type: "image", invalidate: true })
-    .catch(() => undefined);
 }
 
 export async function GET(request: NextRequest) {
@@ -172,11 +105,22 @@ export async function GET(request: NextRequest) {
   const photographerOnly = searchParams.get("photographer") === "true";
   const limit = Number(searchParams.get("limit") ?? 0);
   const category = searchParams.get("category");
+  const albumId = searchParams.get("albumId");
   const includeInactive =
     searchParams.get("includeInactive") === "true" && (await canMutate(request));
   const images = await readImages();
 
-  let filtered = includeInactive ? images : images.filter(isActive);
+  let filtered = includeInactive ? images : images.filter(isActiveImage);
+
+  // Album images only ever appear when their album is explicitly requested —
+  // never in "Alle"/category views, the home slideshow, or the photographer feed.
+  // The admin's full management listing (includeInactive, authenticated) is the
+  // one exception: it must keep showing album images so they stay editable.
+  if (albumId) {
+    filtered = filtered.filter((image) => image.albumId === albumId);
+  } else if (!includeInactive) {
+    filtered = filtered.filter((image) => !image.albumId);
+  }
 
   if (homeOnly) {
     const homeImages = filtered.filter(
@@ -235,14 +179,27 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const albumId = normalizeAlbumId(formData.get("albumId"));
+
+  if (albumId) {
+    const albums = await readAlbums();
+    if (!albums.some((album) => album.id === albumId)) {
+      return NextResponse.json(
+        { message: "Das ausgewählte Album wurde nicht gefunden." },
+        { status: 400 },
+      );
+    }
+  }
+
   const category = normalizeCategory(formData.get("category"));
   const title = String(formData.get("title") ?? "").trim();
   const altPrefix = String(formData.get("alt") ?? "").trim();
   const useOnHome =
-    formData.get("useOnHome") === "true" ||
-    category === "Slider" ||
-    category === "Startseite";
-  const isPhotographer = formData.get("isPhotographer") === "true";
+    !albumId &&
+    (formData.get("useOnHome") === "true" ||
+      category === "Slider" ||
+      category === "Startseite");
+  const isPhotographer = !albumId && formData.get("isPhotographer") === "true";
   const existingImages = await readImages();
   const buffers: { file: File; buffer: Buffer }[] = [];
 
@@ -283,6 +240,7 @@ export async function POST(request: NextRequest) {
       isPhotographer,
       active: true,
       createdAt: new Date().toISOString(),
+      albumId,
     });
   }
 
@@ -392,10 +350,32 @@ export async function PATCH(request: NextRequest) {
   const alt = String(formData.get("alt") ?? currentImage.alt).trim();
   const title = String(formData.get("title") ?? currentImage.title ?? "").trim();
   const category = normalizeCategoryWithFallback(formData.get("category"), currentImage.category);
-  const isCategoryCover = parseBoolean(
-    formData.get("isCategoryCover"),
-    Boolean(currentImage.isCategoryCover),
-  );
+
+  const albumIdProvided = formData.has("albumId");
+  const albumId = albumIdProvided
+    ? normalizeAlbumId(formData.get("albumId"))
+    : currentImage.albumId;
+
+  if (albumId) {
+    const albums = await readAlbums();
+    if (!albums.some((album) => album.id === albumId)) {
+      return NextResponse.json(
+        { message: "Das ausgewählte Album wurde nicht gefunden." },
+        { status: 400 },
+      );
+    }
+  }
+
+  const isCategoryCover = albumId
+    ? false
+    : parseBoolean(formData.get("isCategoryCover"), Boolean(currentImage.isCategoryCover));
+  const useOnHome = albumId
+    ? false
+    : parseBoolean(formData.get("useOnHome"), Boolean(currentImage.useOnHome));
+  const isPhotographer = albumId
+    ? false
+    : parseBoolean(formData.get("isPhotographer"), Boolean(currentImage.isPhotographer));
+
   const updatedImage: MediaImage = {
     ...currentImage,
     src: replacementSrc ?? currentImage.src,
@@ -403,13 +383,11 @@ export async function PATCH(request: NextRequest) {
     title: title || currentImage.title || alt || currentImage.alt,
     alt: alt || currentImage.alt,
     category,
-    useOnHome: parseBoolean(formData.get("useOnHome"), Boolean(currentImage.useOnHome)),
-    isPhotographer: parseBoolean(
-      formData.get("isPhotographer"),
-      Boolean(currentImage.isPhotographer),
-    ),
+    useOnHome,
+    isPhotographer,
     isCategoryCover,
-    active: parseBoolean(formData.get("active"), isActive(currentImage)),
+    active: parseBoolean(formData.get("active"), isActiveImage(currentImage)),
+    albumId,
   };
 
   const nextImages = [...images];

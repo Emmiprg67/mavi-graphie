@@ -82,6 +82,7 @@ export const galleryFilters = [
   "Hochzeit",
   "Destination Wedding",
   "Portrait",
+  "Alben",
 ];
 
 export const processSteps = [
