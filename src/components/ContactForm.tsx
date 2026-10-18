@@ -41,7 +41,6 @@ export function ContactForm() {
       shootingType: String(form.get("shootingType") ?? ""),
       preferredDate: String(form.get("preferredDate") ?? ""),
       location: String(form.get("location") ?? "").trim(),
-      budget: String(form.get("budget") ?? "").trim(),
       people: String(form.get("people") ?? "").trim(),
       message: String(form.get("message") ?? "").trim(),
       privacy: form.get("privacy") === "on",
@@ -168,14 +167,9 @@ export function ContactForm() {
         <input name="location" />
       </Field>
 
-      <div className="grid gap-5 md:grid-cols-2">
-        <Field label="Budget">
-          <input name="budget" inputMode="decimal" placeholder="Optional" />
-        </Field>
-        <Field label="Anzahl der Personen">
-          <input name="people" inputMode="numeric" placeholder="Optional" />
-        </Field>
-      </div>
+      <Field label="Anzahl der Personen">
+        <input name="people" inputMode="numeric" placeholder="Optional" />
+      </Field>
 
       <Field label="Nachricht *" error={errors.message}>
         <textarea name="message" rows={7} />

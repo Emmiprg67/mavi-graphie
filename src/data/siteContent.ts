@@ -1,7 +1,7 @@
 export const brand = {
-  siteName: "Mavi Graphie",
-  name: "Mavi Graphie",
-  email: "mavi-graphie@gmx.de",
+  siteName: "mâvi.graphie",
+  name: "mâvi.graphie",
+  email: "mavi.graphie@gmx.de",
   instagram: "https://www.instagram.com/mavi.graphie?igsh=cDE4bWI5dDI0eGNx",
 };
 
@@ -42,10 +42,10 @@ export const services = [
     category: "Standesamt",
   },
   {
-    title: "Paare",
+    title: "Destination Wedding",
     description:
       "Natürliche Paarbilder, die Verbindung, Bewegung und echte Nähe zeigen.",
-    category: "Paare",
+    category: "Destination Wedding",
   },
   {
     title: "Hochzeiten",
@@ -62,7 +62,7 @@ export const services = [
 ];
 
 export const about = {
-  eyebrow: "Hi, ich bin Vildan – die Fotografin hinter Mavi.graphie.",
+  eyebrow: "Hi, ich bin Vildan – die Fotografin hinter mâvi.graphie.",
   title: "Herzlich willkommen!",
   paragraphs: [
     "28 Jahre, Mama einer wundervollen 3-jährigen Tochter und Hochzeitsfotografin aus Leidenschaft. Mein Stil: Zeitlos, emotional & elegant. Was ich liebe: Reisen, neue Orte entdecken und echte Geschichten erzählen.",
@@ -73,16 +73,14 @@ export const about = {
     "Was mich ausmacht? Herzlichkeit, Liebe zum Detail und die Leidenschaft, jede Geschichte mit ganzem Herzen zu erzählen.",
     "Ich freue mich darauf, eure Geschichte in zeitlosen und emotionalen Bildern festzuhalten. 🤍",
   ],
-  signature: "Mavi Graphie",
+  signature: "mâvi.graphie",
   button: "Mehr über mich",
 };
 
 export const galleryFilters = [
   "Alle",
-  "Familie",
   "Hochzeit",
-  "Paare",
-  "Baby",
+  "Destination Wedding",
   "Portrait",
 ];
 
@@ -122,7 +120,7 @@ export const shootingTypes = [
   "Verlobung",
   "Henna",
   "Standesamt",
-  "Paar",
+  "Destination Wedding",
   "Hochzeit",
   "Portrait",
   "Sonstiges",

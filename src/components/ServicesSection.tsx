@@ -26,7 +26,10 @@ export function ServicesSection() {
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service) => {
-            const image = images.find((item) => item.category === service.category);
+            const image =
+              images.find(
+                (item) => item.category === service.category && item.isCategoryCover,
+              ) ?? images.find((item) => item.category === service.category);
 
             return (
               <article

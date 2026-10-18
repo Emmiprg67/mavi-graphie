@@ -70,8 +70,8 @@ export default function DatenschutzPage() {
                   {legalConfig.services.contactApi} Verarbeitet werden dabei
                   Vorname, Nachname, E-Mail-Adresse, optionale Telefonnummer,
                   Art des Shootings, Wunschtermin, Ort oder Location,
-                  optionales Budget, optionale Personenanzahl, Nachricht und
-                  die Datenschutz-Zustimmung. Zweck ist ausschließlich die
+                  optionale Personenanzahl, Nachricht und die
+                  Datenschutz-Zustimmung. Zweck ist ausschließlich die
                   Bearbeitung Ihrer Anfrage.
                 </p>
                 <p>

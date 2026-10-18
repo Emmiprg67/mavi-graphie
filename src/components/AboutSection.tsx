@@ -18,7 +18,7 @@ export function AboutSection() {
   const photographerImages = images.filter((image) => image.isPhotographer);
   const fallbackImages = [
     images.find((image) => image.category === "Portrait"),
-    images.find((image) => image.category === "Paare"),
+    images.find((image) => image.category === "Destination Wedding"),
     images.find(
       (image) => image.category === "Hochzeit" && image.useOnHome === false,
     ),

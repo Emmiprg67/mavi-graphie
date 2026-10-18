@@ -17,10 +17,8 @@ import { AdminLogoutButton } from "./AdminLogoutButton";
 const categories: MediaCategory[] = [
   "Slider",
   "Startseite",
-  "Familie",
   "Hochzeit",
-  "Paare",
-  "Baby",
+  "Destination Wedding",
   "Portrait",
   "Verlobung",
   "Henna",
@@ -159,6 +157,7 @@ export function AdminUploadManager() {
     form.set("id", id);
     form.set("useOnHome", form.get("useOnHome") ? "true" : "false");
     form.set("isPhotographer", form.get("isPhotographer") ? "true" : "false");
+    form.set("isCategoryCover", form.get("isCategoryCover") ? "true" : "false");
     form.set("active", form.get("active") ? "true" : "false");
 
     const response = await fetch("/api/images", {
@@ -449,6 +448,11 @@ export function AdminUploadManager() {
                       <div className="absolute left-4 top-4 bg-white/92 px-3 py-2 text-xs font-bold uppercase tracking-normal">
                         #{String(index + 1).padStart(2, "0")}
                       </div>
+                      {image.isCategoryCover ? (
+                        <div className="absolute right-4 top-4 bg-clay px-3 py-2 text-xs font-bold uppercase tracking-normal text-white">
+                          Cover: {image.category}
+                        </div>
+                      ) : null}
                     </div>
 
                     <form
@@ -490,7 +494,7 @@ export function AdminUploadManager() {
                         />
                       </label>
 
-                      <div className="grid gap-2 sm:grid-cols-3">
+                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                         <label className="flex min-h-11 items-center gap-2 border border-line bg-ivory px-3 text-sm">
                           <input
                             name="active"
@@ -517,6 +521,15 @@ export function AdminUploadManager() {
                             className="h-4 w-4 accent-clay"
                           />
                           Fotograf
+                        </label>
+                        <label className="flex min-h-11 items-center gap-2 border border-line bg-ivory px-3 text-sm">
+                          <input
+                            name="isCategoryCover"
+                            type="checkbox"
+                            defaultChecked={Boolean(image.isCategoryCover)}
+                            className="h-4 w-4 accent-clay"
+                          />
+                          Kategorie-Cover
                         </label>
                       </div>
 

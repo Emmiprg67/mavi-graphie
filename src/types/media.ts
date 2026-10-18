@@ -1,10 +1,8 @@
 export type MediaCategory =
   | "Slider"
   | "Startseite"
-  | "Familie"
   | "Hochzeit"
-  | "Paare"
-  | "Baby"
+  | "Destination Wedding"
   | "Portrait"
   | "Verlobung"
   | "Henna"
@@ -22,6 +20,7 @@ export type MediaImage = {
   height?: number;
   useOnHome?: boolean;
   isPhotographer?: boolean;
+  isCategoryCover?: boolean;
   active?: boolean;
   createdAt?: string;
 };

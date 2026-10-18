@@ -20,10 +20,8 @@ const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/av
 const categoryValues: MediaCategory[] = [
   "Slider",
   "Startseite",
-  "Familie",
   "Hochzeit",
-  "Paare",
-  "Baby",
+  "Destination Wedding",
   "Portrait",
   "Verlobung",
   "Henna",
@@ -393,23 +391,38 @@ export async function PATCH(request: NextRequest) {
 
   const alt = String(formData.get("alt") ?? currentImage.alt).trim();
   const title = String(formData.get("title") ?? currentImage.title ?? "").trim();
+  const category = normalizeCategoryWithFallback(formData.get("category"), currentImage.category);
+  const isCategoryCover = parseBoolean(
+    formData.get("isCategoryCover"),
+    Boolean(currentImage.isCategoryCover),
+  );
   const updatedImage: MediaImage = {
     ...currentImage,
     src: replacementSrc ?? currentImage.src,
     publicId: replacementPublicId ?? currentImage.publicId,
     title: title || currentImage.title || alt || currentImage.alt,
     alt: alt || currentImage.alt,
-    category: normalizeCategoryWithFallback(formData.get("category"), currentImage.category),
+    category,
     useOnHome: parseBoolean(formData.get("useOnHome"), Boolean(currentImage.useOnHome)),
     isPhotographer: parseBoolean(
       formData.get("isPhotographer"),
       Boolean(currentImage.isPhotographer),
     ),
+    isCategoryCover,
     active: parseBoolean(formData.get("active"), isActive(currentImage)),
   };
 
   const nextImages = [...images];
   nextImages[imageIndex] = updatedImage;
+
+  if (isCategoryCover) {
+    for (let i = 0; i < nextImages.length; i += 1) {
+      if (i !== imageIndex && nextImages[i].category === category) {
+        nextImages[i] = { ...nextImages[i], isCategoryCover: false };
+      }
+    }
+  }
+
   await writeImages(nextImages);
 
   return NextResponse.json({ image: updatedImage, images: nextImages });

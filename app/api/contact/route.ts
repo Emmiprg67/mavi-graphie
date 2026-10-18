@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { brand } from "@/data/siteContent";
 
 export const runtime = "nodejs";
 
@@ -12,8 +13,6 @@ const requiredFields = [
   "message",
 ] as const;
 
-const CONTACT_RECIPIENT = "mavi-graphie@gmx.de";
-
 const fieldLabels: Record<string, string> = {
   firstName: "Vorname",
   lastName: "Nachname",
@@ -22,7 +21,6 @@ const fieldLabels: Record<string, string> = {
   shootingType: "Art des Shootings",
   preferredDate: "Wunschtermin",
   location: "Ort / Location",
-  budget: "Budget",
   people: "Anzahl der Personen",
   message: "Nachricht",
 };
@@ -99,8 +97,8 @@ export async function POST(request: NextRequest) {
   const senderEmail = String(body.email);
 
   const { error } = await resend.emails.send({
-    from: `Mavi Graphie Website <kontakt@${senderDomain}>`,
-    to: [CONTACT_RECIPIENT],
+    from: `${brand.name} Website <kontakt@${senderDomain}>`,
+    to: [brand.email],
     replyTo: senderEmail,
     subject: `Neue Anfrage von ${firstName} ${lastName}`,
     text: buildEmailText(body),
