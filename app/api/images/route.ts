@@ -6,7 +6,6 @@ import {
   deleteCloudinaryImage,
   isActiveImage,
   isCloudinaryConfigured,
-  readAlbums,
   readImages,
   uploadImageBuffer,
   writeImages,
@@ -89,11 +88,6 @@ function normalizeCategoryWithFallback(
   return fallback;
 }
 
-function normalizeAlbumId(value: FormDataEntryValue | null): string | undefined {
-  if (typeof value === "string" && value.trim() !== "") return value.trim();
-  return undefined;
-}
-
 function parseBoolean(value: FormDataEntryValue | null, fallback = false) {
   if (typeof value !== "string") return fallback;
   return value === "true" || value === "on";
@@ -105,21 +99,21 @@ export async function GET(request: NextRequest) {
   const photographerOnly = searchParams.get("photographer") === "true";
   const limit = Number(searchParams.get("limit") ?? 0);
   const category = searchParams.get("category");
-  const albumId = searchParams.get("albumId");
+  const albumOnly = searchParams.get("album") === "true";
   const includeInactive =
     searchParams.get("includeInactive") === "true" && (await canMutate(request));
   const images = await readImages();
 
   let filtered = includeInactive ? images : images.filter(isActiveImage);
 
-  // Album images only ever appear when their album is explicitly requested —
+  // Album images only ever appear when the Album view is explicitly requested —
   // never in "Alle"/category views, the home slideshow, or the photographer feed.
   // The admin's full management listing (includeInactive, authenticated) is the
   // one exception: it must keep showing album images so they stay editable.
-  if (albumId) {
-    filtered = filtered.filter((image) => image.albumId === albumId);
+  if (albumOnly) {
+    filtered = filtered.filter((image) => image.inAlbum);
   } else if (!includeInactive) {
-    filtered = filtered.filter((image) => !image.albumId);
+    filtered = filtered.filter((image) => !image.inAlbum);
   }
 
   if (homeOnly) {
@@ -179,27 +173,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const albumId = normalizeAlbumId(formData.get("albumId"));
-
-  if (albumId) {
-    const albums = await readAlbums();
-    if (!albums.some((album) => album.id === albumId)) {
-      return NextResponse.json(
-        { message: "Das ausgewählte Album wurde nicht gefunden." },
-        { status: 400 },
-      );
-    }
-  }
-
+  const inAlbum = formData.get("album") === "true";
   const category = normalizeCategory(formData.get("category"));
   const title = String(formData.get("title") ?? "").trim();
   const altPrefix = String(formData.get("alt") ?? "").trim();
   const useOnHome =
-    !albumId &&
+    !inAlbum &&
     (formData.get("useOnHome") === "true" ||
       category === "Slider" ||
       category === "Startseite");
-  const isPhotographer = !albumId && formData.get("isPhotographer") === "true";
+  const isPhotographer = !inAlbum && formData.get("isPhotographer") === "true";
   const existingImages = await readImages();
   const buffers: { file: File; buffer: Buffer }[] = [];
 
@@ -227,12 +210,16 @@ export async function POST(request: NextRequest) {
   for (const { buffer } of buffers) {
     const result = await uploadImageBuffer(buffer);
 
+    const fallbackAlt = inAlbum
+      ? "Fotografie aus dem Album"
+      : `Fotografie aus der Kategorie ${category}`;
+
     uploadedImages.push({
       id: randomUUID(),
       src: cloudinaryOptimizedUrl(result.public_id, result.version),
       publicId: result.public_id,
       title: title || altPrefix || `Fotografie ${uploadedImages.length + 1}`,
-      alt: altPrefix || `Fotografie aus der Kategorie ${category}`,
+      alt: altPrefix || fallbackAlt,
       category,
       width: result.width,
       height: result.height,
@@ -240,7 +227,7 @@ export async function POST(request: NextRequest) {
       isPhotographer,
       active: true,
       createdAt: new Date().toISOString(),
-      albumId,
+      inAlbum,
     });
   }
 
@@ -351,28 +338,17 @@ export async function PATCH(request: NextRequest) {
   const title = String(formData.get("title") ?? currentImage.title ?? "").trim();
   const category = normalizeCategoryWithFallback(formData.get("category"), currentImage.category);
 
-  const albumIdProvided = formData.has("albumId");
-  const albumId = albumIdProvided
-    ? normalizeAlbumId(formData.get("albumId"))
-    : currentImage.albumId;
+  const inAlbum = formData.has("album")
+    ? formData.get("album") === "true"
+    : Boolean(currentImage.inAlbum);
 
-  if (albumId) {
-    const albums = await readAlbums();
-    if (!albums.some((album) => album.id === albumId)) {
-      return NextResponse.json(
-        { message: "Das ausgewählte Album wurde nicht gefunden." },
-        { status: 400 },
-      );
-    }
-  }
-
-  const isCategoryCover = albumId
+  const isCategoryCover = inAlbum
     ? false
     : parseBoolean(formData.get("isCategoryCover"), Boolean(currentImage.isCategoryCover));
-  const useOnHome = albumId
+  const useOnHome = inAlbum
     ? false
     : parseBoolean(formData.get("useOnHome"), Boolean(currentImage.useOnHome));
-  const isPhotographer = albumId
+  const isPhotographer = inAlbum
     ? false
     : parseBoolean(formData.get("isPhotographer"), Boolean(currentImage.isPhotographer));
 
@@ -387,7 +363,7 @@ export async function PATCH(request: NextRequest) {
     isPhotographer,
     isCategoryCover,
     active: parseBoolean(formData.get("active"), isActiveImage(currentImage)),
-    albumId,
+    inAlbum,
   };
 
   const nextImages = [...images];

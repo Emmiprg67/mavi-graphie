@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
 import { list, put } from "@vercel/blob";
-import type { MediaAlbum, MediaImage } from "@/types/media";
+import type { MediaImage } from "@/types/media";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -13,7 +13,6 @@ cloudinary.config({
 export { cloudinary };
 
 const imagesManifestPathname = "media.json";
-const albumsManifestPathname = "albums.json";
 
 export async function readImages(): Promise<MediaImage[]> {
   const { blobs } = await list({ prefix: imagesManifestPathname, limit: 1 });
@@ -29,28 +28,6 @@ export async function readImages(): Promise<MediaImage[]> {
 
 export async function writeImages(images: MediaImage[]) {
   await put(imagesManifestPathname, JSON.stringify(images, null, 2), {
-    access: "public",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: "application/json",
-    cacheControlMaxAge: 0,
-  });
-}
-
-export async function readAlbums(): Promise<MediaAlbum[]> {
-  const { blobs } = await list({ prefix: albumsManifestPathname, limit: 1 });
-  const manifest = blobs.find((blob) => blob.pathname === albumsManifestPathname);
-  if (!manifest) return [];
-
-  const response = await fetch(manifest.url, { cache: "no-store" });
-  if (!response.ok) return [];
-
-  const parsed = await response.json().catch(() => null);
-  return Array.isArray(parsed) ? (parsed as MediaAlbum[]) : [];
-}
-
-export async function writeAlbums(albums: MediaAlbum[]) {
-  await put(albumsManifestPathname, JSON.stringify(albums, null, 2), {
     access: "public",
     addRandomSuffix: false,
     allowOverwrite: true,

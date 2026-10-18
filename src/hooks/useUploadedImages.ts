@@ -6,7 +6,7 @@ import type { MediaImage } from "@/types/media";
 type UseUploadedImagesOptions = {
   homeOnly?: boolean;
   photographerOnly?: boolean;
-  albumId?: string;
+  album?: boolean;
 };
 
 const cacheTtlMs = 60_000;
@@ -53,9 +53,9 @@ export function useUploadedImages(options: UseUploadedImagesOptions = {}) {
     const params = new URLSearchParams();
     if (options.homeOnly) params.set("home", "true");
     if (options.photographerOnly) params.set("photographer", "true");
-    if (options.albumId) params.set("albumId", options.albumId);
+    if (options.album) params.set("album", "true");
     return params.toString();
-  }, [options.homeOnly, options.photographerOnly, options.albumId]);
+  }, [options.homeOnly, options.photographerOnly, options.album]);
 
   useEffect(() => {
     let active = true;
