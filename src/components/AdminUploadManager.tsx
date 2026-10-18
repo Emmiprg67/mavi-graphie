@@ -821,7 +821,7 @@ export function AdminUploadManager() {
                 {images.map((image, index) => (
                   <article
                     key={image.id}
-                    className="group overflow-hidden border border-line bg-white transition duration-300 hover:-translate-y-1 hover:shadow-soft"
+                    className="group min-w-0 overflow-hidden border border-line bg-white transition duration-300 hover:-translate-y-1 hover:shadow-soft"
                   >
                     <div className="relative aspect-[16/11] bg-linen">
                       <Image
@@ -850,33 +850,37 @@ export function AdminUploadManager() {
 
                     <form
                       onSubmit={(event) => updateImage(event, image.id)}
-                      className="grid gap-4 p-5"
+                      className="grid min-w-0 gap-4 p-5"
                     >
-                      <div className="grid gap-4 md:grid-cols-[1fr_150px_170px]">
-                        <label className="grid gap-2 text-sm font-semibold">
+                      <div className="flex min-w-0 flex-wrap gap-4">
+                        <label className="grid min-w-0 flex-[2] basis-48 gap-2 text-sm font-semibold">
                           Titel
                           <input
                             name="title"
                             defaultValue={imageTitle(image)}
-                            className="min-h-11"
+                            className="min-h-11 w-full min-w-0"
                           />
                         </label>
 
-                        <label className="grid gap-2 text-sm font-semibold">
+                        <label className="grid min-w-0 flex-1 basis-36 gap-2 text-sm font-semibold">
                           Kategorie
-                          <select name="category" defaultValue={image.category} className="min-h-11">
+                          <select
+                            name="category"
+                            defaultValue={image.category}
+                            className="min-h-11 w-full min-w-0"
+                          >
                             {categories.map((category) => (
                               <option key={category}>{category}</option>
                             ))}
                           </select>
                         </label>
 
-                        <label className="grid gap-2 text-sm font-semibold">
+                        <label className="grid min-w-0 flex-1 basis-36 gap-2 text-sm font-semibold">
                           Ziel
                           <select
                             name="albumId"
                             defaultValue={image.albumId ?? ""}
-                            className="min-h-11"
+                            className="min-h-11 w-full min-w-0"
                           >
                             <option value="">Galerie</option>
                             {albums.map((album) => (
@@ -894,66 +898,70 @@ export function AdminUploadManager() {
                         entfernt.
                       </p>
 
-                      <label className="grid gap-2 text-sm font-semibold">
+                      <label className="grid min-w-0 gap-2 text-sm font-semibold">
                         Alt-Text
-                        <input name="alt" defaultValue={image.alt} className="min-h-11" />
+                        <input
+                          name="alt"
+                          defaultValue={image.alt}
+                          className="min-h-11 w-full min-w-0"
+                        />
                       </label>
 
-                      <label className="grid gap-2 text-sm font-semibold">
+                      <label className="grid min-w-0 gap-2 text-sm font-semibold">
                         Bild ersetzen
                         <input
                           name="image"
                           type="file"
                           accept="image/jpeg,image/png,image/webp,image/avif"
-                          className="min-h-11 bg-ivory p-2"
+                          className="min-h-11 w-full min-w-0 bg-ivory p-2"
                         />
                       </label>
 
-                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                        <label className="flex min-h-11 items-center gap-2 border border-line bg-ivory px-3 text-sm">
+                      <div className="flex min-w-0 flex-wrap gap-2">
+                        <label className="flex min-h-11 min-w-0 flex-1 basis-40 items-center gap-2 border border-line bg-ivory px-3 text-sm">
                           <input
                             name="active"
                             type="checkbox"
                             defaultChecked={image.active !== false}
-                            className="h-4 w-4 accent-clay"
+                            className="h-4 w-4 flex-shrink-0 accent-clay"
                           />
                           Sichtbar
                         </label>
-                        <label className="flex min-h-11 items-center gap-2 border border-line bg-ivory px-3 text-sm">
+                        <label className="flex min-h-11 min-w-0 flex-1 basis-40 items-center gap-2 border border-line bg-ivory px-3 text-sm">
                           <input
                             name="useOnHome"
                             type="checkbox"
                             defaultChecked={Boolean(image.useOnHome)}
-                            className="h-4 w-4 accent-clay"
+                            className="h-4 w-4 flex-shrink-0 accent-clay"
                           />
                           Slider
                         </label>
-                        <label className="flex min-h-11 items-center gap-2 border border-line bg-ivory px-3 text-sm">
+                        <label className="flex min-h-11 min-w-0 flex-1 basis-40 items-center gap-2 border border-line bg-ivory px-3 text-sm">
                           <input
                             name="isPhotographer"
                             type="checkbox"
                             defaultChecked={Boolean(image.isPhotographer)}
-                            className="h-4 w-4 accent-clay"
+                            className="h-4 w-4 flex-shrink-0 accent-clay"
                           />
                           Fotograf
                         </label>
-                        <label className="flex min-h-11 items-center gap-2 border border-line bg-ivory px-3 text-sm">
+                        <label className="flex min-h-11 min-w-0 flex-1 basis-40 items-center gap-2 border border-line bg-ivory px-3 text-sm">
                           <input
                             name="isCategoryCover"
                             type="checkbox"
                             defaultChecked={Boolean(image.isCategoryCover)}
-                            className="h-4 w-4 accent-clay"
+                            className="h-4 w-4 flex-shrink-0 accent-clay"
                           />
                           Kategorie-Cover
                         </label>
                       </div>
 
-                      <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="flex min-w-0 flex-wrap gap-2">
                         <button
                           type="button"
                           disabled={index === 0 || busy}
                           onClick={() => moveImage(image.id, "move-up")}
-                          className="min-h-11 border border-line px-4 text-sm font-semibold transition hover:border-clay hover:text-clay disabled:opacity-40"
+                          className="min-h-11 min-w-0 flex-1 basis-40 border border-line px-4 text-sm font-semibold transition hover:border-clay hover:text-clay disabled:opacity-40"
                         >
                           Reihenfolge hoch
                         </button>
@@ -961,24 +969,24 @@ export function AdminUploadManager() {
                           type="button"
                           disabled={index === images.length - 1 || busy}
                           onClick={() => moveImage(image.id, "move-down")}
-                          className="min-h-11 border border-line px-4 text-sm font-semibold transition hover:border-clay hover:text-clay disabled:opacity-40"
+                          className="min-h-11 min-w-0 flex-1 basis-40 border border-line px-4 text-sm font-semibold transition hover:border-clay hover:text-clay disabled:opacity-40"
                         >
                           Reihenfolge runter
                         </button>
                       </div>
 
-                      <div className="grid gap-2 sm:grid-cols-[1fr_0.8fr]">
+                      <div className="flex min-w-0 flex-wrap gap-2">
                         <button
                           type="submit"
                           disabled={busy}
-                          className="min-h-11 bg-graphite px-4 text-sm font-bold uppercase tracking-normal text-white transition hover:bg-clay disabled:opacity-60"
+                          className="min-h-11 min-w-0 flex-[2] basis-40 bg-graphite px-4 text-sm font-bold uppercase tracking-normal text-white transition hover:bg-clay disabled:opacity-60"
                         >
                           Speichern
                         </button>
                         <button
                           type="button"
                           onClick={() => deleteImage(image.id)}
-                          className="min-h-11 border border-line px-4 text-sm font-semibold transition hover:border-clay hover:text-clay"
+                          className="min-h-11 min-w-0 flex-1 basis-32 border border-line px-4 text-sm font-semibold transition hover:border-clay hover:text-clay"
                         >
                           Loeschen
                         </button>
