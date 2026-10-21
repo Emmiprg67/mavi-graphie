@@ -283,7 +283,8 @@ export function InfiniteImageSlider() {
                 fill
                 sizes="(max-width: 640px) 64vw, (max-width: 1024px) 30vw, 17vw"
                 className="slider-slide-visual object-cover"
-                loading={index < 6 ? "eager" : "lazy"}
+                loading={index === 0 ? undefined : index < 6 ? "eager" : "lazy"}
+                priority={index === 0}
                 draggable={false}
               />
             </button>

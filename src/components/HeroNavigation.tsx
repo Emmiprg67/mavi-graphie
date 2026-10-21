@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { brand, navigation } from "@/data/siteContent";
+import { useActiveNavHref } from "@/hooks/useActiveNavHref";
 import { InstagramIcon } from "./InstagramIcon";
 import { MobileNavigation } from "./MobileNavigation";
 
 export function HeroNavigation() {
+  const active = useActiveNavHref();
+
   return (
     <div
       id="hero-navigation"
@@ -47,7 +50,7 @@ export function HeroNavigation() {
             {brand.name}
           </Link>
           <MobileNavigation
-            active="/"
+            active={active}
             tone="light"
             id="hero-mobile-navigation"
           />
@@ -62,7 +65,7 @@ export function HeroNavigation() {
               key={item.href}
               href={item.href}
               className={`transition ${
-                item.href === "/" ? "text-mist" : "text-white hover:text-mist"
+                active === item.href ? "text-mist" : "text-white hover:text-mist"
               }`}
             >
               {item.label}

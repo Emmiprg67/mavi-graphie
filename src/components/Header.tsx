@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { brand, navigation } from "@/data/siteContent";
+import { useActiveNavHref } from "@/hooks/useActiveNavHref";
 import { MobileNavigation } from "./MobileNavigation";
 
 type HeaderProps = {
@@ -14,10 +15,7 @@ export function Header({ alwaysVisible = false }: HeaderProps) {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const [heroNavigationVisible, setHeroNavigationVisible] = useState(isHome);
-  const active =
-    pathname === "/kontakt" || pathname === "/impressum" || pathname === "/datenschutz"
-      ? "/kontakt"
-      : "/";
+  const active = useActiveNavHref();
   const visible = alwaysVisible || !isHome || !heroNavigationVisible;
 
   useEffect(() => {

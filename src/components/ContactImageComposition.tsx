@@ -23,6 +23,7 @@ export function ContactImageComposition() {
             src={backImage.src}
             alt={backImage.alt}
             fill
+            priority
             sizes="(max-width: 768px) 80vw, 440px"
             className="object-cover"
           />

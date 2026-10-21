@@ -22,7 +22,7 @@ export function Hero() {
           src={heroImage.src}
           alt={heroImage.alt}
           fill
-          loading="eager"
+          priority
           sizes="100vw"
           className="object-cover"
         />
