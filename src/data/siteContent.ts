@@ -9,7 +9,6 @@ export const navigation = [
   { label: "Home", href: "/" },
   { label: "Über mich", href: "/#ueber-mich" },
   { label: "Leistungen", href: "/#leistungen" },
-  { label: "Reportagen", href: "/#reportagen" },
   { label: "Galerie", href: "/#galerie" },
   { label: "Kontakt", href: "/kontakt" },
 ];

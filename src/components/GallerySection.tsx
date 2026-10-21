@@ -41,14 +41,11 @@ export function GallerySection() {
       aria-labelledby="gallery-title"
     >
       <div className="section-shell">
-        <div
-          id="reportagen"
-          className="mb-10 flex flex-col justify-between gap-8 md:flex-row md:items-end"
-        >
+        <div className="mb-10 flex flex-col justify-between gap-8 md:flex-row md:items-end">
           <div className="max-w-2xl">
             <AnimatedHeading
               id="gallery-title"
-              eyebrow="Reportagen und Galerie"
+              eyebrow="Galerie"
               title="Leise Momente, warmes Licht und Bilder mit Gefühl."
               className="serif-heading text-[2.15rem] text-graphite md:text-[3.15rem]"
             />

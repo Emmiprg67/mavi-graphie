@@ -92,8 +92,7 @@ textarea:focus-visible {
   margin-inline: auto;
 }
 
-section[id],
-[id="reportagen"] {
+section[id] {
   scroll-margin-top: 96px;
 }
 
@@ -188,8 +187,7 @@ section[id],
     scroll-padding-top: 72px;
   }
 
-  section[id],
-  [id="reportagen"] {
+  section[id] {
     scroll-margin-top: 72px;
   }
 
