@@ -1,3 +1,4 @@
+import { checkBotId } from "botid/server";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { brand } from "@/data/siteContent";
@@ -78,6 +79,16 @@ function countLinks(message: string): number {
 }
 
 export async function POST(request: NextRequest) {
+  // Vercel BotID: invisible, JS-based bot detection with no external account
+  // or keys needed. Blocks confirmed bots before any other work happens.
+  const botVerification = await checkBotId();
+  if (botVerification.isBot) {
+    return NextResponse.json(
+      { error: "Zugriff verweigert." },
+      { status: 403 },
+    );
+  }
+
   const ip = getClientIp(request);
   if (isRateLimited(ip)) {
     return NextResponse.json(
