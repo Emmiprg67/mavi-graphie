@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { cloneElement, FormEvent, ReactElement, useId, useState } from "react";
+import {
+  cloneElement,
+  FormEvent,
+  ReactElement,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { shootingTypes } from "@/data/siteContent";
 
 type FormErrors = Partial<
@@ -25,6 +32,8 @@ export function ContactForm() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [state, setState] = useState<SubmitState>({ type: "idle", message: "" });
   const [sending, setSending] = useState(false);
+  // Timestamp the form became interactive - used server-side as a bot time trap.
+  const loadedAtRef = useRef(Date.now());
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -44,6 +53,8 @@ export function ContactForm() {
       people: String(form.get("people") ?? "").trim(),
       message: String(form.get("message") ?? "").trim(),
       privacy: form.get("privacy") === "on",
+      website: String(form.get("website") ?? "").trim(),
+      loadedAt: loadedAtRef.current,
     };
 
     if (!payload.firstName) nextErrors.firstName = "Bitte gib deinen Vornamen ein.";
@@ -59,6 +70,9 @@ export function ContactForm() {
     }
     if (!payload.message) {
       nextErrors.message = "Bitte schreibe eine kurze Nachricht.";
+    } else if (payload.message.length < 10) {
+      nextErrors.message =
+        "Deine Nachricht ist zu kurz. Bitte beschreibe dein Anliegen etwas ausführlicher.";
     }
     if (!payload.privacy) {
       nextErrors.privacy = "Bitte bestätige die Datenschutzerklärung.";
@@ -114,7 +128,23 @@ export function ContactForm() {
   };
 
   return (
-    <form noValidate onSubmit={handleSubmit} className="grid gap-5">
+    <form noValidate onSubmit={handleSubmit} className="relative grid gap-5">
+      {/* Honeypot: invisible to real visitors, but form-scraping bots fill every
+          input they find. Any value here causes a silent server-side discard. */}
+      <div
+        className="absolute left-[-9999px] top-0 h-0 w-0 overflow-hidden"
+        aria-hidden="true"
+      >
+        <label htmlFor="website">Webseite</label>
+        <input
+          id="website"
+          name="website"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
+
       {state.message ? (
         <div
           role="status"
