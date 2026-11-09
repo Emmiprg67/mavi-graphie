@@ -1,6 +1,5 @@
 import { randomUUID } from "crypto";
 import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
-import { list, put } from "@vercel/blob";
 import type { MediaImage } from "@/types/media";
 
 cloudinary.config({
@@ -12,35 +11,49 @@ cloudinary.config({
 
 export { cloudinary };
 
-const imagesManifestPathname = "media.json";
+const manifestPublicId = "mavi-graphie/manifest/media";
 
 export async function readImages(): Promise<MediaImage[]> {
-  const { blobs } = await list({ prefix: imagesManifestPathname, limit: 1 });
-  const manifest = blobs.find((blob) => blob.pathname === imagesManifestPathname);
-  if (!manifest) return [];
+  const url = cloudinary.url(manifestPublicId, {
+    resource_type: "raw",
+    secure: true,
+  });
 
-  const response = await fetch(manifest.url, { cache: "no-store" });
+  const response = await fetch(`${url}?v=${Date.now()}`, { cache: "no-store" });
   if (!response.ok) {
+    if (response.status === 404) return [];
     console.error(
-      `readImages: Abruf von ${imagesManifestPathname} fehlgeschlagen (${response.status} ${response.statusText}). Moeglich: Blob-Store gesperrt/Billing inaktiv.`,
+      `readImages: Abruf des Cloudinary-Manifests fehlgeschlagen (${response.status} ${response.statusText}).`,
     );
     return [];
   }
 
   const parsed = await response.json().catch(() => null);
   if (parsed === null) {
-    console.error(`readImages: ${imagesManifestPathname} enthaelt kein gueltiges JSON.`);
+    console.error("readImages: Manifest enthaelt kein gueltiges JSON.");
   }
   return Array.isArray(parsed) ? (parsed as MediaImage[]) : [];
 }
 
 export async function writeImages(images: MediaImage[]) {
-  await put(imagesManifestPathname, JSON.stringify(images, null, 2), {
-    access: "public",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: "application/json",
-    cacheControlMaxAge: 0,
+  const buffer = Buffer.from(JSON.stringify(images, null, 2));
+  await new Promise<void>((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: "raw",
+        public_id: manifestPublicId,
+        overwrite: true,
+        invalidate: true,
+      },
+      (error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      },
+    );
+    uploadStream.end(buffer);
   });
 }
 
