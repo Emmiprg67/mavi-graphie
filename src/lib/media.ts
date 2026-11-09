@@ -13,13 +13,18 @@ export { cloudinary };
 
 const manifestPublicId = "mavi-graphie/manifest/media";
 
-export async function readImages(): Promise<MediaImage[]> {
-  const url = cloudinary.url(manifestPublicId, {
-    resource_type: "raw",
-    secure: true,
-  });
+// cloudinary.url() inserts a placeholder "v1" path segment for `raw`
+// resources when no explicit version is given, which 404s. Build the
+// delivery URL by hand instead — it's stable for a fixed, overwritten
+// public ID.
+function manifestDeliveryUrl() {
+  return `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/raw/upload/${manifestPublicId}`;
+}
 
-  const response = await fetch(`${url}?v=${Date.now()}`, { cache: "no-store" });
+export async function readImages(): Promise<MediaImage[]> {
+  const response = await fetch(`${manifestDeliveryUrl()}?v=${Date.now()}`, {
+    cache: "no-store",
+  });
   if (!response.ok) {
     if (response.status === 404) return [];
     console.error(
