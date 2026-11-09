@@ -20,9 +20,17 @@ export async function readImages(): Promise<MediaImage[]> {
   if (!manifest) return [];
 
   const response = await fetch(manifest.url, { cache: "no-store" });
-  if (!response.ok) return [];
+  if (!response.ok) {
+    console.error(
+      `readImages: Abruf von ${imagesManifestPathname} fehlgeschlagen (${response.status} ${response.statusText}). Moeglich: Blob-Store gesperrt/Billing inaktiv.`,
+    );
+    return [];
+  }
 
   const parsed = await response.json().catch(() => null);
+  if (parsed === null) {
+    console.error(`readImages: ${imagesManifestPathname} enthaelt kein gueltiges JSON.`);
+  }
   return Array.isArray(parsed) ? (parsed as MediaImage[]) : [];
 }
 
