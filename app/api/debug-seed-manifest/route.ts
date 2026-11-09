@@ -13,6 +13,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
+  const debugUrl = cloudinary.url("mavi-graphie/manifest/media", {
+    resource_type: "raw",
+    secure: true,
+  });
+  const debugFetch = await fetch(`${debugUrl}?v=${Date.now()}`, { cache: "no-store" });
+  const debugBody = await debugFetch.text();
+
+  return NextResponse.json({
+    debugUrl,
+    debugStatus: debugFetch.status,
+    debugBodyPreview: debugBody.slice(0, 200),
+  });
+
   const existing = await readImages();
   if (existing.length > 0) {
     return NextResponse.json(
